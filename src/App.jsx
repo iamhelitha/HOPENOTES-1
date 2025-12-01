@@ -27,6 +27,7 @@ import footerLogoImage from './images/Gemini_Generated_Image_d5zif3d5zif3d5zi.pn
 export default function App() {
   const [mode, setMode] = useState('light');
   const [gradeFilter, setGradeFilter] = useState('all');
+  const [levelFilter, setLevelFilter] = useState('all');
   const [notes, setNotes] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [stats, setStats] = useState({
@@ -58,12 +59,14 @@ export default function App() {
         const mappedNotes = links.map((link) => ({
           id: link.id,
           subject: link.description || 'Google Drive resource',
-          grade: link.grade || '',
+          grade: link.grade || link.year || '',
           medium: link.medium || '',
           curriculum: 'Google Drive',
           title: link.description || 'Shared resource',
           region: '',
-          url: link.url
+          url: link.url,
+          level: link.level || 'school',
+          universityName: link.universityName || ''
         }));
         setNotes(mappedNotes);
 
@@ -81,10 +84,11 @@ export default function App() {
   }, []);
 
   const filteredNotes = notes.filter((note) => {
+    const matchesLevel = levelFilter === 'all' || note.level === levelFilter;
     const matchesGrade =
       gradeFilter === 'all' || String(note.grade) === String(gradeFilter);
 
-    return matchesGrade;
+    return matchesLevel && matchesGrade;
   });
 
   return (
@@ -116,33 +120,58 @@ export default function App() {
             >
               <FormControl
                 size="small"
-                sx={{ minWidth: { xs: '100%', sm: 180 }, width: { xs: '100%', sm: 'auto' } }}
+                sx={{ minWidth: { xs: '100%', sm: 160 }, width: { xs: '100%', sm: 'auto' } }}
               >
-                <InputLabel id="browse-grade-filter-label">Grade</InputLabel>
+                <InputLabel id="browse-level-filter-label">Level</InputLabel>
                 <Select
-                  labelId="browse-grade-filter-label"
-                  id="browse-grade-filter"
-                  label="Grade"
-                  value={gradeFilter}
-                  onChange={(e) => setGradeFilter(e.target.value)}
+                  labelId="browse-level-filter-label"
+                  id="browse-level-filter"
+                  label="Level"
+                  value={levelFilter}
+                  onChange={(e) => {
+                    setLevelFilter(e.target.value);
+                    setGradeFilter('all'); // Reset grade filter when level changes
+                  }}
                 >
                   <MenuItem value="all">
-                    <em>All grades</em>
+                    <em>All levels</em>
                   </MenuItem>
-                  <MenuItem value="1">Grade 1</MenuItem>
-                  <MenuItem value="2">Grade 2</MenuItem>
-                  <MenuItem value="3">Grade 3</MenuItem>
-                  <MenuItem value="4">Grade 4</MenuItem>
-                  <MenuItem value="5">Grade 5</MenuItem>
-                  <MenuItem value="6">Grade 6</MenuItem>
-                  <MenuItem value="7">Grade 7</MenuItem>
-                  <MenuItem value="8">Grade 8</MenuItem>
-                  <MenuItem value="9">Grade 9</MenuItem>
-                  <MenuItem value="10">Grade 10</MenuItem>
-                  <MenuItem value="11">Grade 11</MenuItem>
-                  <MenuItem value="12">Grade 12</MenuItem>
+                  <MenuItem value="school">School</MenuItem>
+                  <MenuItem value="university">University</MenuItem>
                 </Select>
               </FormControl>
+
+              {levelFilter === 'all' || levelFilter === 'school' ? (
+                <FormControl
+                  size="small"
+                  sx={{ minWidth: { xs: '100%', sm: 180 }, width: { xs: '100%', sm: 'auto' } }}
+                >
+                  <InputLabel id="browse-grade-filter-label">Grade</InputLabel>
+                  <Select
+                    labelId="browse-grade-filter-label"
+                    id="browse-grade-filter"
+                    label="Grade"
+                    value={gradeFilter}
+                    onChange={(e) => setGradeFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">
+                      <em>All grades</em>
+                    </MenuItem>
+                    <MenuItem value="1">Grade 1</MenuItem>
+                    <MenuItem value="2">Grade 2</MenuItem>
+                    <MenuItem value="3">Grade 3</MenuItem>
+                    <MenuItem value="4">Grade 4</MenuItem>
+                    <MenuItem value="5">Grade 5</MenuItem>
+                    <MenuItem value="6">Grade 6</MenuItem>
+                    <MenuItem value="7">Grade 7</MenuItem>
+                    <MenuItem value="8">Grade 8</MenuItem>
+                    <MenuItem value="9">Grade 9</MenuItem>
+                    <MenuItem value="10">Grade 10</MenuItem>
+                    <MenuItem value="11">Grade 11</MenuItem>
+                    <MenuItem value="12">Grade 12</MenuItem>
+                  </Select>
+                </FormControl>
+              ) : null}
             </Box>
 
             {loadingNotes ? (
