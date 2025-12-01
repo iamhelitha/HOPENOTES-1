@@ -19,6 +19,7 @@ import { UniversityGroups } from './components/UniversityGroups.jsx';
 import { TelegramGroups } from './components/TelegramGroups.jsx';
 import { WhatsappChannels } from './components/WhatsappChannels.jsx';
 import { YoutubeChannels } from './components/YoutubeChannels.jsx';
+import { EducationWebsites } from './components/EducationWebsites.jsx';
 import { Feedback } from './components/Feedback.jsx';
 import { ScrollToTop } from './components/ScrollToTop.jsx';
 import { getAppTheme } from './theme.js';
@@ -28,6 +29,7 @@ import { fetchUniversityGroups } from './services/universityGroups.js';
 import { fetchTelegramGroups } from './services/telegramGroups.js';
 import { fetchWhatsappChannels } from './services/whatsappChannels.js';
 import { fetchYoutubeChannels } from './services/youtubeChannels.js';
+import { fetchEducationWebsites } from './services/educationWebsites.js';
 import footerLogoImage from './images/Gemini_Generated_Image_d5zif3d5zif3d5zi.png';
 
 export default function App() {
@@ -55,13 +57,14 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [links, whatsapp, uni, telegram, whatsappChannels, youtube] = await Promise.all([
+        const [links, whatsapp, uni, telegram, whatsappChannels, youtube, websites] = await Promise.all([
           fetchDriveLinks(),
           fetchWhatsappGroups(),
           fetchUniversityGroups(),
           fetchTelegramGroups(),
           fetchWhatsappChannels(),
-          fetchYoutubeChannels()
+          fetchYoutubeChannels(),
+          fetchEducationWebsites()
         ]);
 
         // Map driveLinks docs to the shape expected by NotesGrid
@@ -127,8 +130,24 @@ export default function App() {
           description: channel.description || ''
         }));
 
+        // Map Education Websites
+        const websiteNotes = websites.map((website) => ({
+          id: website.id,
+          subject: website.subject || 'Education Website',
+          grade: website.level === 'university' ? website.year || '' : website.grade || '',
+          medium: website.medium || '',
+          curriculum: 'Education Website',
+          title: website.subject || 'Education Website',
+          region: '',
+          url: website.url,
+          level: website.level || 'school',
+          universityName: website.universityName || '',
+          type: 'website',
+          description: website.description || ''
+        }));
+
         // Combine all notes
-        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes];
+        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes, ...websiteNotes];
         setNotes(allNotes);
 
         setStats({
@@ -208,30 +227,30 @@ export default function App() {
                   sx={{ minWidth: { xs: '100%', sm: 180 }, width: { xs: '100%', sm: 'auto' } }}
                 >
                   <InputLabel id="browse-grade-filter-label">Grade</InputLabel>
-                  <Select
-                    labelId="browse-grade-filter-label"
-                    id="browse-grade-filter"
-                    label="Grade"
-                    value={gradeFilter}
-                    onChange={(e) => setGradeFilter(e.target.value)}
-                  >
-                    <MenuItem value="all">
-                      <em>All grades</em>
-                    </MenuItem>
-                    <MenuItem value="1">Grade 1</MenuItem>
-                    <MenuItem value="2">Grade 2</MenuItem>
-                    <MenuItem value="3">Grade 3</MenuItem>
-                    <MenuItem value="4">Grade 4</MenuItem>
-                    <MenuItem value="5">Grade 5</MenuItem>
-                    <MenuItem value="6">Grade 6</MenuItem>
-                    <MenuItem value="7">Grade 7</MenuItem>
-                    <MenuItem value="8">Grade 8</MenuItem>
-                    <MenuItem value="9">Grade 9</MenuItem>
-                    <MenuItem value="10">Grade 10</MenuItem>
-                    <MenuItem value="11">Grade 11</MenuItem>
-                    <MenuItem value="12">Grade 12</MenuItem>
-                  </Select>
-                </FormControl>
+                <Select
+                  labelId="browse-grade-filter-label"
+                  id="browse-grade-filter"
+                  label="Grade"
+                  value={gradeFilter}
+                  onChange={(e) => setGradeFilter(e.target.value)}
+                >
+                  <MenuItem value="all">
+                    <em>All grades</em>
+                  </MenuItem>
+                      <MenuItem value="1">Grade 1</MenuItem>
+                      <MenuItem value="2">Grade 2</MenuItem>
+                      <MenuItem value="3">Grade 3</MenuItem>
+                      <MenuItem value="4">Grade 4</MenuItem>
+                      <MenuItem value="5">Grade 5</MenuItem>
+                      <MenuItem value="6">Grade 6</MenuItem>
+                      <MenuItem value="7">Grade 7</MenuItem>
+                      <MenuItem value="8">Grade 8</MenuItem>
+                      <MenuItem value="9">Grade 9</MenuItem>
+                      <MenuItem value="10">Grade 10</MenuItem>
+                      <MenuItem value="11">Grade 11</MenuItem>
+                      <MenuItem value="12">Grade 12</MenuItem>
+                </Select>
+              </FormControl>
               ) : null}
             </Box>
 
@@ -301,6 +320,17 @@ export default function App() {
             <YoutubeChannels />
           </section>
 
+          <section id="education-websites" className="section">
+            <div className="section-header">
+              <h2>Education Websites</h2>
+              <p className="section-subtitle">
+                Discover free educational websites that provide learning resources, courses, and study materials to help students continue their education online.
+              </p>
+            </div>
+
+            <EducationWebsites />
+          </section>
+
           <section id="donate" className="section section-alt">
             <div className="section-header">
               <h2>Donate / Upload Notes</h2>
@@ -358,8 +388,8 @@ export default function App() {
               />
               
               <Box sx={{ textAlign: 'center', width: '100%' }}>
-                <p>HopeNotes • Rebuilding education, one note at a time.</p>
-                <p className="footer-meta">Made with care for students in Sri Lanka.</p>
+          <p>HopeNotes • Rebuilding education, one note at a time.</p>
+          <p className="footer-meta">Made with care for students in Sri Lanka.</p>
                 <p className="footer-meta">
                   ⚠️ <strong>Disclaimer</strong>: The documents, papers, and short notes available on this
                   website are sent by students and teachers from all over Sri Lanka. We do not claim
