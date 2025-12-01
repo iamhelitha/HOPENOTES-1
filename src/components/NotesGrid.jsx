@@ -53,13 +53,26 @@ export function NotesGrid({ notes }) {
               <div className="notes-grid">
                 {groupedByGrade[gradeKey].map((note) => (
                   <article key={note.id} className="note-card">
-                    <div className="note-chip-row">
-                      <span className="chip chip-subject">{note.subject}</span>
-                      <span className="chip chip-medium">{note.medium}</span>
-                    </div>
-                    <h4 className="note-title">{note.title}</h4>
-                    <p className="note-meta">{note.curriculum}</p>
-                    <p className="note-location">{note.region}</p>
+                <div className="note-chip-row">
+                  <span className="chip chip-subject">{note.subject}</span>
+                  <span className="chip chip-medium">{note.medium}</span>
+                  {note.type && (
+                    <span className={`chip chip-${note.type}`}>
+                      {note.type === 'drive' && '📁 Google Drive'}
+                      {note.type === 'telegram' && '💬 Telegram'}
+                      {note.type === 'whatsappChannel' && '📢 WhatsApp Channel'}
+                      {note.type === 'youtube' && '▶️ YouTube'}
+                    </span>
+                  )}
+                </div>
+                <h4 className="note-title">{note.title}</h4>
+                <p className="note-meta">{note.curriculum}</p>
+                {note.description && (
+                  <p className="note-meta" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.3rem' }}>
+                    {note.description}
+                  </p>
+                )}
+                <p className="note-location">{note.region}</p>
                     <div className="note-actions">
                       <button
                         type="button"
@@ -103,9 +116,22 @@ export function NotesGrid({ notes }) {
                       <span className="chip chip-subject">{note.subject}</span>
                       <span className="chip chip-medium">{note.medium}</span>
                       {note.grade && <span className="chip chip-medium">Year {note.grade}</span>}
+                      {note.type && (
+                        <span className={`chip chip-${note.type}`}>
+                          {note.type === 'drive' && '📁 Google Drive'}
+                          {note.type === 'telegram' && '💬 Telegram'}
+                          {note.type === 'whatsappChannel' && '📢 WhatsApp Channel'}
+                          {note.type === 'youtube' && '▶️ YouTube'}
+                        </span>
+                      )}
                     </div>
                     <h4 className="note-title">{note.title}</h4>
                     <p className="note-meta">{note.curriculum}</p>
+                    {note.description && (
+                      <p className="note-meta" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.3rem' }}>
+                        {note.description}
+                      </p>
+                    )}
                     <p className="note-location">{note.universityName}</p>
                     <div className="note-actions">
                       <button
