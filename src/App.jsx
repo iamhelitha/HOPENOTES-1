@@ -83,14 +83,14 @@ export default function App() {
         const telegramNotes = telegram.map((group) => ({
           id: group.id,
           subject: group.subject || 'Telegram Group',
-          grade: group.grade || '',
+          grade: group.level === 'university' ? group.year || '' : group.grade || '',
           medium: group.medium || '',
           curriculum: 'Telegram Group',
           title: group.subject || 'Telegram Study Group',
           region: '',
           url: group.url,
-          level: 'school',
-          universityName: '',
+          level: group.level || 'school',
+          universityName: group.universityName || '',
           type: 'telegram',
           description: group.description || ''
         }));
@@ -99,14 +99,14 @@ export default function App() {
         const whatsappChannelNotes = whatsappChannels.map((channel) => ({
           id: channel.id,
           subject: channel.subject || 'WhatsApp Channel',
-          grade: channel.grade || '',
+          grade: channel.level === 'university' ? channel.year || '' : channel.grade || '',
           medium: channel.medium || '',
           curriculum: 'WhatsApp Channel',
           title: channel.subject || 'WhatsApp Channel',
           region: '',
           url: channel.url,
-          level: 'school',
-          universityName: '',
+          level: channel.level || 'school',
+          universityName: channel.universityName || '',
           type: 'whatsappChannel',
           description: channel.description || ''
         }));
@@ -115,14 +115,14 @@ export default function App() {
         const youtubeNotes = youtube.map((channel) => ({
           id: channel.id,
           subject: channel.subject || 'YouTube Channel',
-          grade: channel.grade || '',
+          grade: channel.level === 'university' ? channel.year || '' : channel.grade || '',
           medium: channel.medium || '',
           curriculum: 'YouTube Channel',
           title: channel.subject || 'YouTube Channel',
           region: '',
           url: channel.url,
-          level: 'school',
-          universityName: '',
+          level: channel.level || 'school',
+          universityName: channel.universityName || '',
           type: 'youtube',
           description: channel.description || ''
         }));
