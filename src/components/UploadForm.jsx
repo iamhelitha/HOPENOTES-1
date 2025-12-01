@@ -413,41 +413,135 @@ export function UploadForm() {
 
   return (
     <Paper
-      elevation={4}
+      elevation={0}
       sx={(theme) => ({
-        borderRadius: 3,
-        p: { xs: 2.4, md: 3.2 },
+        borderRadius: { xs: 3, sm: 4, md: 5 },
+        p: { xs: 2.5, sm: 3, md: 4, lg: 5 },
         boxShadow:
           theme.palette.mode === 'light'
-            ? '0 18px 40px rgba(15,23,42,0.12)'
-            : '0 26px 60px rgba(0,0,0,0.95)',
+            ? '0 20px 60px rgba(15,23,42,0.08), 0 0 0 1px rgba(148,163,184,0.1)'
+            : '0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(30,64,175,0.3)',
         border:
           theme.palette.mode === 'light'
-            ? '1px solid rgba(148,163,184,0.25)'
-            : '1px solid rgba(30,64,175,0.8)',
+            ? '1px solid rgba(148,163,184,0.15)'
+            : '1px solid rgba(30,64,175,0.4)',
         bgcolor:
           theme.palette.mode === 'light'
-            ? 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(240,253,250,0.98))'
-            : 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(8,47,73,0.98))'
+            ? 'linear-gradient(135deg, rgba(255,255,255,0.99) 0%, rgba(248,250,252,0.99) 50%, rgba(240,253,250,0.99) 100%)'
+            : 'linear-gradient(135deg, rgba(15,23,42,0.99) 0%, rgba(8,47,73,0.99) 50%, rgba(2,6,23,0.99) 100%)',
+        width: '100%',
+        maxWidth: '100%',
+        mx: 'auto',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: 'linear-gradient(90deg, #0891b2, #22c55e, #0ea5e9, #a855f7, #ef4444, #f97316)',
+          backgroundSize: '200% 100%',
+          animation: 'gradientShift 8s ease infinite',
+          zIndex: 1
+        },
+        '@keyframes gradientShift': {
+          '0%, 100%': {
+            backgroundPosition: '0% 50%'
+          },
+          '50%': {
+            backgroundPosition: '100% 50%'
+          }
+        }
       })}
     >
-      <Box component="form" onSubmit={handleSubmit} noValidate>
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ position: 'relative', zIndex: 2 }}>
         {error && (
-          <Box sx={{ mt: 2 }}>
-            <Alert severity="warning" variant="outlined">
+          <Box sx={{ mb: { xs: 2.5, sm: 3, md: 3 } }}>
+            <Alert 
+              severity="warning" 
+              variant="filled"
+              sx={{
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: 13, sm: 14 },
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '0 4px 12px rgba(245,158,11,0.3)'
+                    : '0 4px 12px rgba(245,158,11,0.5)'
+              }}
+            >
               {error}
             </Alert>
           </Box>
         )}
+
+        {status && (
+          <Box sx={{ mb: { xs: 2.5, sm: 3, md: 3 } }}>
+            <Alert 
+              severity="success" 
+              variant="filled"
+              sx={{
+                borderRadius: { xs: 2, sm: 2.5 },
+                fontSize: { xs: 13, sm: 14 },
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '0 4px 12px rgba(34,197,94,0.3)'
+                    : '0 4px 12px rgba(34,197,94,0.5)'
+              }}
+            >
+              {status}
+            </Alert>
+          </Box>
+        )}
+
+        {/* Header Section */}
+        <Box
+          sx={{
+            textAlign: 'center',
+            mb: { xs: 3, sm: 3.5, md: 4 },
+            px: { xs: 1, sm: 0 }
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              fontSize: { xs: 24, sm: 28, md: 32, lg: 36 },
+              mb: { xs: 1, sm: 1.5 },
+              background: (theme) =>
+                theme.palette.mode === 'light'
+                  ? 'linear-gradient(135deg, #0891b2 0%, #22c55e 50%, #0ea5e9 100%)'
+                  : 'linear-gradient(135deg, #06b6d4 0%, #34d399 50%, #38bdf8 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: { xs: -0.5, sm: -0.8, md: -1 }
+            }}
+          >
+            Donate / Upload Notes
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              fontSize: { xs: 14, sm: 15, md: 16 },
+              color: 'text.secondary',
+              maxWidth: '600px',
+              mx: 'auto',
+              lineHeight: 1.7
+            }}
+          >
+            Share your educational resources and help students continue learning during difficult times
+          </Typography>
+        </Box>
 
         {/* Logo Image Section */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'center',
-            mb: { xs: 2, sm: 2.5, md: 3, lg: 3.5 },
-            mt: { xs: 0.5, sm: 0 },
-            px: { xs: 1, sm: 0 }
+            mb: { xs: 3, sm: 3.5, md: 4 },
+            px: { xs: 0.5, sm: 1, md: 0 }
           }}
         >
           <Box
@@ -455,101 +549,390 @@ export function UploadForm() {
             src={donateImage}
             alt="HopeNotes Donate"
             sx={{
-              width: { xs: '100%', sm: 160, md: 200, lg: 240 },
-              maxWidth: { xs: 180, sm: 'none' },
+              width: { xs: 160, sm: 200, md: 240, lg: 280 },
+              maxWidth: { xs: '85%', sm: 'none' },
               height: 'auto',
-              borderRadius: { xs: 2.5, sm: 3, md: 4, lg: 5 },
+              borderRadius: { xs: 4, sm: 5, md: 6 },
               boxShadow: (theme) =>
                 theme.palette.mode === 'light'
-                  ? '0 12px 32px rgba(15,23,42,0.15)'
-                  : '0 16px 40px rgba(0,0,0,0.6)',
+                  ? '0 20px 50px rgba(15,23,42,0.15), 0 0 0 1px rgba(148,163,184,0.1)'
+                  : '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,64,175,0.3)',
               objectFit: 'contain',
-              border: (theme) =>
-                theme.palette.mode === 'light'
-                  ? '2px solid rgba(148,163,184,0.2)'
-                  : '2px solid rgba(30,64,175,0.4)'
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.02)'
+              }
             }}
           />
         </Box>
 
+        {/* Upload Type Selection Section */}
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: 1.5,
-            mb: 2.5
+            mb: { xs: 3.5, sm: 4, md: 4.5 },
+            px: { xs: 0.5, sm: 0 }
           }}
         >
-          <Box>
-            <Typography variant="subtitle2" sx={{ textTransform: 'uppercase', mb: 0.5 }}>
-              How would you like to donate?
+          <Box
+            sx={{
+              mb: { xs: 2, sm: 2.5, md: 3 },
+              textAlign: { xs: 'left', sm: 'left', md: 'center' }
+            }}
+          >
+            <Typography 
+              variant="h6"
+              sx={{ 
+                mb: { xs: 1, sm: 1.2, md: 1.5 },
+                fontSize: { xs: 16, sm: 18, md: 20 },
+                fontWeight: 700,
+                color: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '#1e293b'
+                    : '#f1f5f9'
+              }}
+            >
+              Select Upload Type
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Upload a file or share links that students can access anytime.
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: 13, sm: 14, md: 15 },
+                lineHeight: 1.6,
+                mb: { xs: 2, sm: 2.5 }
+              }}
+            >
+              Choose how you&apos;d like to share your educational resources
             </Typography>
             <Box
               sx={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: 0.8,
-                mt: 1.2
+                gap: { xs: 0.8, sm: 1, md: 1.2 },
+                justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'center' },
+                mb: { xs: 2.5, sm: 3 }
               }}
             >
               <Box
                 sx={{
-                  px: 1,
-                  py: 0.3,
+                  px: { xs: 1.4, sm: 1.6, md: 1.8 },
+                  py: { xs: 0.5, sm: 0.6, md: 0.7 },
                   borderRadius: 999,
-                  fontSize: 11,
-                  bgcolor: 'rgba(34,197,94,0.08)',
-                  color: '#15803d'
+                  fontSize: { xs: 11, sm: 11.5, md: 12 },
+                  fontWeight: 700,
+                  bgcolor: 'rgba(34,197,94,0.12)',
+                  color: '#15803d',
+                  border: '2px solid rgba(34,197,94,0.3)',
+                  boxShadow: '0 2px 8px rgba(34,197,94,0.15)'
                 }}
               >
-                100% free for students
+                ✓ 100% Free
               </Box>
               <Box
                 sx={{
-                  px: 1,
-                  py: 0.3,
+                  px: { xs: 1.4, sm: 1.6, md: 1.8 },
+                  py: { xs: 0.5, sm: 0.6, md: 0.7 },
                   borderRadius: 999,
-                  fontSize: 11,
-                  bgcolor: 'rgba(59,130,246,0.08)',
-                  color: '#1d4ed8'
+                  fontSize: { xs: 11, sm: 11.5, md: 12 },
+                  fontWeight: 700,
+                  bgcolor: 'rgba(59,130,246,0.12)',
+                  color: '#1d4ed8',
+                  border: '2px solid rgba(59,130,246,0.3)',
+                  boxShadow: '0 2px 8px rgba(59,130,246,0.15)'
                 }}
               >
-                Works across Sri Lanka
+                🇱🇰 Sri Lanka Wide
               </Box>
               <Box
                 sx={{
-                  px: 1,
-                  py: 0.3,
+                  px: { xs: 1.4, sm: 1.6, md: 1.8 },
+                  py: { xs: 0.5, sm: 0.6, md: 0.7 },
                   borderRadius: 999,
-                  fontSize: 11,
-                  bgcolor: 'rgba(14,165,233,0.08)',
-                  color: '#0369a1'
+                  fontSize: { xs: 11, sm: 11.5, md: 12 },
+                  fontWeight: 700,
+                  bgcolor: 'rgba(14,165,233,0.12)',
+                  color: '#0369a1',
+                  border: '2px solid rgba(14,165,233,0.3)',
+                  boxShadow: '0 2px 8px rgba(14,165,233,0.15)'
                 }}
               >
-                Perfect for floods & disaster recovery
+                🌊 Disaster Relief
               </Box>
             </Box>
           </Box>
 
+          {/* Mobile Dropdown - Show on xs and sm */}
+          <FormControl
+            fullWidth
+            sx={{
+              display: { xs: 'block', sm: 'block', md: 'none' },
+              width: '100%',
+              mb: { xs: 3, sm: 3.5 }
+            }}
+          >
+            <InputLabel 
+              id="upload-mode-select-label"
+              sx={{
+                fontSize: { xs: 14, sm: 15 },
+                fontWeight: 600,
+                color: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '#1e293b'
+                    : '#e5e7eb'
+              }}
+            >
+              Choose Upload Type
+            </InputLabel>
+            <Select
+              labelId="upload-mode-select-label"
+              id="upload-mode-select"
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+              label="Choose Upload Type"
+              sx={{
+                fontSize: { xs: 15, sm: 16 },
+                fontWeight: 600,
+                borderRadius: { xs: 3, sm: 3.5 },
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(255,255,255,0.98)'
+                    : 'rgba(15,23,42,0.98)',
+                border: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '2px solid rgba(148,163,184,0.2)'
+                    : '2px solid rgba(148,163,184,0.3)',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '0 4px 16px rgba(15,23,42,0.08)'
+                    : '0 4px 16px rgba(0,0,0,0.3)',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'transparent'
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'transparent'
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'transparent',
+                  borderWidth: '0px'
+                },
+                '& .MuiSelect-select': {
+                  py: { xs: 1.4, sm: 1.6 },
+                  px: { xs: 2, sm: 2.5 },
+                  display: 'flex',
+                  alignItems: 'center'
+                }
+              }}
+            >
+              <MenuItem 
+                value="file"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(8,145,178,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'file'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(8,145,178,0.08)'
+                        : 'rgba(8,145,178,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(8,145,178,0.12)'
+                        : 'rgba(8,145,178,0.2)'
+                  }
+                }}
+              >
+                📤 Upload file
+              </MenuItem>
+              <MenuItem 
+                value="links"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(34,197,94,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'links'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(34,197,94,0.08)'
+                        : 'rgba(34,197,94,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(34,197,94,0.12)'
+                        : 'rgba(34,197,94,0.2)'
+                  }
+                }}
+              >
+                📁 Google Drive links
+              </MenuItem>
+              <MenuItem 
+                value="whatsapp"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(45,212,191,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'whatsapp'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(45,212,191,0.08)'
+                        : 'rgba(45,212,191,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(45,212,191,0.12)'
+                        : 'rgba(45,212,191,0.2)'
+                  }
+                }}
+              >
+                💬 WhatsApp group links
+              </MenuItem>
+              <MenuItem 
+                value="uni"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(168,85,247,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'uni'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(168,85,247,0.08)'
+                        : 'rgba(168,85,247,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(168,85,247,0.12)'
+                        : 'rgba(168,85,247,0.2)'
+                  }
+                }}
+              >
+                🎓 University groups
+              </MenuItem>
+              <MenuItem 
+                value="telegram"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(6,182,212,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'telegram'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(6,182,212,0.08)'
+                        : 'rgba(6,182,212,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(6,182,212,0.12)'
+                        : 'rgba(6,182,212,0.2)'
+                  }
+                }}
+              >
+                📱 Telegram groups
+              </MenuItem>
+              <MenuItem 
+                value="whatsappChannel"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(16,185,129,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'whatsappChannel'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(16,185,129,0.08)'
+                        : 'rgba(16,185,129,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(16,185,129,0.12)'
+                        : 'rgba(16,185,129,0.2)'
+                  }
+                }}
+              >
+                📢 WhatsApp Channels
+              </MenuItem>
+              <MenuItem 
+                value="youtube"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(239,68,68,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'youtube'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(239,68,68,0.08)'
+                        : 'rgba(239,68,68,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(239,68,68,0.12)'
+                        : 'rgba(239,68,68,0.2)'
+                  }
+                }}
+              >
+                ▶️ YouTube Channels
+              </MenuItem>
+              <MenuItem 
+                value="website"
+                sx={{
+                  fontSize: { xs: 14, sm: 15 },
+                  fontWeight: 600,
+                  py: { xs: 1, sm: 1.2 },
+                  borderLeft: '4px solid rgba(249,115,22,0.5)',
+                  bgcolor: (theme) =>
+                    mode === 'website'
+                      ? theme.palette.mode === 'light'
+                        ? 'rgba(249,115,22,0.08)'
+                        : 'rgba(249,115,22,0.15)'
+                      : 'transparent',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(249,115,22,0.12)'
+                        : 'rgba(249,115,22,0.2)'
+                  }
+                }}
+              >
+                🌐 Other education websites
+              </MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Desktop Toggle Buttons - Show on md and above */}
           <ToggleButtonGroup
             value={mode}
             exclusive
             onChange={(_, value) => value && setMode(value)}
             size="small"
+            orientation="horizontal"
             sx={{
+              display: { xs: 'none', sm: 'none', md: 'flex' },
               borderRadius: 999,
               bgcolor: 'transparent',
+              flexWrap: 'nowrap',
+              gap: 0.5,
+              width: 'auto',
+              justifyContent: 'flex-end',
               '& .MuiToggleButton-root': {
                 border: 'none',
                 px: 1.6,
+                py: 0.6,
                 fontSize: 13,
                 textTransform: 'none',
                 borderRadius: 999,
+                fontWeight: 600,
                 color: (theme) =>
                   theme.palette.mode === 'light'
                     ? theme.palette.text.secondary
@@ -712,8 +1095,35 @@ export function UploadForm() {
           </ToggleButtonGroup>
         </Box>
 
+        {/* Form Fields Section */}
+        <Box
+          sx={{
+            mt: { xs: 3, sm: 3.5, md: 4 },
+            p: { xs: 2, sm: 2.5, md: 3 },
+            borderRadius: { xs: 3, sm: 4 },
+            bgcolor: (theme) =>
+              theme.palette.mode === 'light'
+                ? 'rgba(255,255,255,0.6)'
+                : 'rgba(15,23,42,0.4)',
+            border: (theme) =>
+              theme.palette.mode === 'light'
+                ? '1px solid rgba(148,163,184,0.15)'
+                : '1px solid rgba(148,163,184,0.2)',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'light'
+                ? 'inset 0 2px 8px rgba(15,23,42,0.04)'
+                : 'inset 0 2px 8px rgba(0,0,0,0.2)'
+          }}
+        >
         {mode !== 'uni' && (
-          <Grid container spacing={2}>
+          <Grid 
+            container 
+            spacing={{ xs: 2.5, sm: 3, md: 3.5 }}
+            sx={{
+              width: '100%',
+              mx: 0
+            }}
+          >
             {mode === 'file' ? (
               <>
                 <Grid item xs={12} md={6}>
@@ -800,19 +1210,59 @@ export function UploadForm() {
 
                     {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube' || mode === 'website') && (
                       <>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                            <InputLabel id="level-other-label">Level</InputLabel>
-                    <Select
+                        <Grid item xs={12} sm={12} md={6}>
+                          <FormControl fullWidth required>
+                            <InputLabel id="level-other-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Level</InputLabel>
+                            <Select
                               labelId="level-other-label"
                               id="level-other"
                               name="level"
                               label="Level"
                               value={form.level}
                               onChange={handleChange}
+                              sx={{
+                                fontSize: { xs: 14, sm: 15, md: 16 },
+                                borderRadius: { xs: 2, sm: 2.5 },
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'light'
+                                    ? 'rgba(255,255,255,0.9)'
+                                    : 'rgba(15,23,42,0.6)',
+                                '&:hover': {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'light'
+                                      ? 'rgba(255,255,255,1)'
+                                      : 'rgba(15,23,42,0.8)'
+                                },
+                                '&.Mui-focused': {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'light'
+                                      ? 'rgba(255,255,255,1)'
+                                      : 'rgba(15,23,42,0.9)'
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: (theme) =>
+                                    theme.palette.mode === 'light'
+                                      ? 'rgba(148,163,184,0.3)'
+                                      : 'rgba(148,163,184,0.4)',
+                                  borderWidth: '1.5px'
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: (theme) =>
+                                    theme.palette.mode === 'light'
+                                      ? 'rgba(8,145,178,0.5)'
+                                      : 'rgba(56,189,248,0.6)'
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: (theme) =>
+                                    theme.palette.mode === 'light'
+                                      ? 'rgba(8,145,178,0.7)'
+                                      : 'rgba(56,189,248,0.8)',
+                                  borderWidth: '2px'
+                                }
+                              }}
                             >
-                              <MenuItem value="school">School</MenuItem>
-                              <MenuItem value="university">University</MenuItem>
+                              <MenuItem value="school" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>School</MenuItem>
+                              <MenuItem value="university" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>University</MenuItem>
                             </Select>
                           </FormControl>
                         </Grid>
@@ -820,7 +1270,7 @@ export function UploadForm() {
                         {form.level === 'school' ? (
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth required>
-                              <InputLabel id="grade-other-label">Grade</InputLabel>
+                              <InputLabel id="grade-other-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Grade</InputLabel>
                     <Select
                                 labelId="grade-other-label"
                                 id="grade-other"
@@ -883,7 +1333,7 @@ export function UploadForm() {
 
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth required>
-                        <InputLabel id="level-whatsapp-label">Level</InputLabel>
+                        <InputLabel id="level-whatsapp-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Level</InputLabel>
                     <Select
                           labelId="level-whatsapp-label"
                           id="level-whatsapp"
@@ -899,37 +1349,40 @@ export function UploadForm() {
                     </Grid>
 
                     {form.level === 'school' ? (
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} sm={12} md={6}>
                         <FormControl fullWidth required>
-                          <InputLabel id="grade-whatsapp-label">Grade</InputLabel>
-                    <Select
+                          <InputLabel id="grade-whatsapp-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Grade</InputLabel>
+                          <Select
                             labelId="grade-whatsapp-label"
                             id="grade-whatsapp"
                       name="grade"
                       label="Grade"
                       value={form.grade}
                       onChange={handleChange}
+                            sx={{
+                              fontSize: { xs: 14, sm: 15, md: 16 }
+                            }}
                     >
-                      <MenuItem value="">
+                            <MenuItem value="" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>
                         <em>Grade</em>
                       </MenuItem>
-                      <MenuItem value="1">Grade 1</MenuItem>
-                      <MenuItem value="2">Grade 2</MenuItem>
-                      <MenuItem value="3">Grade 3</MenuItem>
-                      <MenuItem value="4">Grade 4</MenuItem>
-                      <MenuItem value="5">Grade 5</MenuItem>
-                      <MenuItem value="6">Grade 6</MenuItem>
-                      <MenuItem value="7">Grade 7</MenuItem>
-                      <MenuItem value="8">Grade 8</MenuItem>
-                      <MenuItem value="9">Grade 9</MenuItem>
-                      <MenuItem value="10">Grade 10</MenuItem>
-                      <MenuItem value="11">Grade 11</MenuItem>
-                      <MenuItem value="12">Grade 12</MenuItem>
+                            <MenuItem value="1" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 1</MenuItem>
+                            <MenuItem value="2" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 2</MenuItem>
+                            <MenuItem value="3" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 3</MenuItem>
+                            <MenuItem value="4" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 4</MenuItem>
+                            <MenuItem value="5" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 5</MenuItem>
+                            <MenuItem value="6" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 6</MenuItem>
+                            <MenuItem value="7" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 7</MenuItem>
+                            <MenuItem value="8" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 8</MenuItem>
+                            <MenuItem value="9" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 9</MenuItem>
+                            <MenuItem value="10" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 10</MenuItem>
+                            <MenuItem value="11" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 11</MenuItem>
+                            <MenuItem value="12" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 12</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                     ) : (
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} sm={12} md={6}>
                         <TextField
                           fullWidth
                           label="University Name"
@@ -939,6 +1392,14 @@ export function UploadForm() {
                           value={form.universityName}
                           onChange={handleChange}
                           required
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              fontSize: { xs: 14, sm: 15, md: 16 }
+                            },
+                            '& .MuiInputLabel-root': {
+                              fontSize: { xs: 14, sm: 15, md: 16 }
+                            }
+                          }}
                         />
                       </Grid>
                     )}
@@ -949,7 +1410,7 @@ export function UploadForm() {
 
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
-                <InputLabel id="medium-label">Medium</InputLabel>
+                <InputLabel id="medium-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Medium</InputLabel>
                 <Select
                   labelId="medium-label"
                   id="medium"
@@ -994,7 +1455,7 @@ export function UploadForm() {
             )}
 
             {mode === 'links' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="driveLink"
@@ -1006,11 +1467,57 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="Paste a folder or file link if your notes live on Google Drive."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
             {mode === 'whatsapp' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="whatsapp-only-link"
@@ -1022,11 +1529,57 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="WhatsApp group link for sharing notes and updates."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
             {mode === 'telegram' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="telegram-link"
@@ -1038,11 +1591,57 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="Telegram group link for sharing notes and updates."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
             {mode === 'whatsappChannel' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="whatsapp-channel-link"
@@ -1054,11 +1653,57 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="WhatsApp Channel link for broadcasting educational content."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
             {mode === 'youtube' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="youtube-channel-link"
@@ -1070,11 +1715,57 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="YouTube Channel link for educational videos and tutorials."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
             {mode === 'website' && (
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} sm={12} md={6}>
                 <TextField
                   fullWidth
                   id="website-link"
@@ -1086,6 +1777,52 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="Link to an educational website that provides free learning resources."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
@@ -1097,12 +1834,58 @@ export function UploadForm() {
                   id="description-other"
                   name="description"
                   label="Description (optional)"
-                  placeholder="Short description about this group or channel"
+                  placeholder="Short description about this group, channel, or website"
                   value={form.description}
                   onChange={handleChange}
                   multiline
-                  rows={2}
-                  helperText="Optional: Add a brief description to help students understand what this group or channel offers."
+                  rows={{ xs: 3, sm: 3, md: 2 }}
+                  helperText="Optional: Add a brief description to help students understand what this resource offers."
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(255,255,255,0.9)'
+                          : 'rgba(15,23,42,0.6)',
+                      '&:hover': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.8)'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,1)'
+                            : 'rgba(15,23,42,0.9)'
+                      }
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: { xs: 14, sm: 15, md: 16 },
+                      fontWeight: 600
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(148,163,184,0.3)'
+                          : 'rgba(148,163,184,0.4)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.5)'
+                          : 'rgba(56,189,248,0.6)'
+                    },
+                    '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'light'
+                          ? 'rgba(8,145,178,0.7)'
+                          : 'rgba(56,189,248,0.8)',
+                      borderWidth: '2px'
+                    }
+                  }}
                 />
               </Grid>
             )}
@@ -1126,7 +1909,7 @@ export function UploadForm() {
 
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
-                <InputLabel id="uni-year-label">Year</InputLabel>
+                <InputLabel id="uni-year-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Year</InputLabel>
                 <Select
                   labelId="uni-year-label"
                   id="uni-year"
@@ -1148,7 +1931,7 @@ export function UploadForm() {
 
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
-                <InputLabel id="uni-medium-label">Medium</InputLabel>
+                <InputLabel id="uni-medium-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Medium</InputLabel>
                 <Select
                   labelId="uni-medium-label"
                   id="uni-medium"
@@ -1198,49 +1981,7 @@ export function UploadForm() {
           </Grid>
         )}
 
-        <Box
-          sx={{
-            mt: 3,
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 1.5
-          }}
-        >
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={mode === 'file'}
-            sx={{
-              px: 3,
-              py: 1.1,
-              borderRadius: 999,
-              backgroundImage:
-                mode === 'file'
-                  ? 'linear-gradient(135deg, #0284c7, #22c55e)'
-                  : 'linear-gradient(135deg, #16a34a, #22c55e)',
-              boxShadow: (theme) =>
-                theme.palette.mode === 'light'
-                  ? mode === 'file'
-                    ? '0 14px 30px rgba(37,99,235,0.5)'
-                    : '0 14px 30px rgba(22,163,74,0.55)'
-                  : mode === 'file'
-                    ? '0 18px 36px rgba(37,99,235,0.9)'
-                    : '0 18px 36px rgba(22,163,74,0.95)'
-            }}
-          >
-            Submit Note
-          </Button>
         </Box>
-
-        {status && (
-          <Box sx={{ mt: 2 }}>
-            <Alert severity="success" variant="outlined">
-              {status}
-            </Alert>
-          </Box>
-        )}
       </Box>
     </Paper>
   );
