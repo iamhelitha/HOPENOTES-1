@@ -6,6 +6,7 @@ import { checkDuplicateUniversityLink } from "../services/universityGroups.js";
 import { checkDuplicateTelegramLink } from "../services/telegramGroups.js";
 import { checkDuplicateWhatsappChannelLink } from "../services/whatsappChannels.js";
 import { checkDuplicateYoutubeChannelLink } from "../services/youtubeChannels.js";
+import { checkDuplicateWebsiteLink } from "../services/educationWebsites.js";
 import { uploadRateLimiter, getClientId } from "../utils/rateLimiter.js";
 import { sanitizeUrl, sanitizeString } from "../utils/inputSanitizer.js";
 
@@ -39,12 +40,13 @@ const initialFormState = {
     description: '',
     telegramLink: '',
     whatsappChannelLink: '',
-    youtubeChannelLink: ''
+    youtubeChannelLink: '',
+    websiteLink: ''
 };
 
 export function UploadForm() {
   const [form, setForm] = useState(initialFormState);
-  const [mode, setMode] = useState('file'); // 'file' | 'links' | 'whatsapp' | 'uni' | 'telegram' | 'whatsappChannel' | 'youtube'
+  const [mode, setMode] = useState('file'); // 'file' | 'links' | 'whatsapp' | 'uni' | 'telegram' | 'whatsappChannel' | 'youtube' | 'website'
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
@@ -167,6 +169,26 @@ export function UploadForm() {
       }
     }
 
+    if (mode === 'website') {
+      const websiteUrl = sanitizeUrl(String(form.websiteLink || '').trim());
+      const websitePattern = /^https?:\/\/.+/i;
+      if (!websiteUrl || !websitePattern.test(websiteUrl)) {
+        setError(
+          'Please paste a valid website URL (for example https://example.com).'
+        );
+        return;
+      }
+      form.websiteLink = websiteUrl;
+      if (form.level === 'university' && !form.universityName.trim()) {
+        setError('Please enter the University Name.');
+        return;
+      }
+      if (form.level === 'school' && !form.grade) {
+        setError('Please select a Grade.');
+        return;
+      }
+    }
+
     if (mode === 'whatsapp') {
       if (form.level === 'university' && !form.universityName.trim()) {
         setError('Please enter the University Name.');
@@ -242,6 +264,15 @@ export function UploadForm() {
         if (isDuplicate) {
           setError(
             'This YouTube Channel link has already been uploaded. Please share a different link.'
+          );
+          return;
+        }
+      } else if (mode === 'website') {
+        const websiteUrl = String(form.websiteLink || '').trim();
+        const isDuplicate = await checkDuplicateWebsiteLink(websiteUrl);
+        if (isDuplicate) {
+          setError(
+            'This education website link has already been uploaded. Please share a different link.'
           );
           return;
         }
@@ -347,6 +378,9 @@ export function UploadForm() {
     } else if (mode === 'youtube') {
       message =
         'Thank you for sharing your YouTube Channel. Educational videos can help students learn visually, especially when physical resources are lost.';
+    } else if (mode === 'website') {
+      message =
+        'Thank you for sharing this education website. Online resources can be a lifeline for students when physical materials are unavailable after disasters.';
     }
     setStatus(message);
 
@@ -622,6 +656,23 @@ export function UploadForm() {
                 color: (theme) =>
                   theme.palette.mode === 'light' ? '#7f1d1d' : '#fee2e2'
               },
+              // Education Websites (8) — orange
+              '& .MuiToggleButton-root:nth-of-type(8)': {
+                border: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '1px solid rgba(249,115,22,0.35)'
+                    : '1px solid rgba(251,146,60,0.6)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(249,115,22,0.06)'
+                    : 'rgba(15,23,42,0.9)'
+              },
+              '& .MuiToggleButton-root:nth-of-type(8).Mui-selected': {
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(251,146,60,0.6))',
+                color: (theme) =>
+                  theme.palette.mode === 'light' ? '#7c2d12' : '#ffedd5'
+              },
               '& .MuiToggleButtonGroup-grouped:not(:last-of-type)': {
                 marginRight: 0.5
               }
@@ -634,6 +685,7 @@ export function UploadForm() {
             <ToggleButton value="telegram">Telegram groups</ToggleButton>
             <ToggleButton value="whatsappChannel">WhatsApp Channels</ToggleButton>
             <ToggleButton value="youtube">YouTube Channels</ToggleButton>
+            <ToggleButton value="website">Other education websites</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -703,7 +755,7 @@ export function UploadForm() {
               </>
             ) : (
               <>
-                {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+                {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube' || mode === 'website') && (
               <>
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -723,12 +775,12 @@ export function UploadForm() {
                   />
                 </Grid>
 
-                    {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+                    {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube' || mode === 'website') && (
                       <>
-                        <Grid item xs={12} md={6}>
-                          <FormControl fullWidth required>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth required>
                             <InputLabel id="level-other-label">Level</InputLabel>
-                            <Select
+                    <Select
                               labelId="level-other-label"
                               id="level-other"
                               name="level"
@@ -809,7 +861,7 @@ export function UploadForm() {
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth required>
                         <InputLabel id="level-whatsapp-label">Level</InputLabel>
-                        <Select
+                    <Select
                           labelId="level-whatsapp-label"
                           id="level-whatsapp"
                           name="level"
@@ -998,8 +1050,24 @@ export function UploadForm() {
                 />
               </Grid>
             )}
+            {mode === 'website' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  id="website-link"
+                  name="websiteLink"
+                  type="url"
+                  label="Education Website Link (required)"
+                  placeholder="https://example.com or https://www.example.com"
+                  value={form.websiteLink}
+                  onChange={handleChange}
+                  required
+                  helperText="Link to an educational website that provides free learning resources."
+                />
+              </Grid>
+            )}
 
-            {(mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+            {(mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube' || mode === 'website') && (
               <Grid item xs={12}>
                 <TextField
                   fullWidth
