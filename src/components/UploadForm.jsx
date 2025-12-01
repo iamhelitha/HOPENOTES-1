@@ -3,6 +3,9 @@ import { db } from "../firebase";
 import { checkDuplicateDriveLink } from "../services/driveLinks.js";
 import { checkDuplicateWhatsappLink } from "../services/whatsappGroups.js";
 import { checkDuplicateUniversityLink } from "../services/universityGroups.js";
+import { checkDuplicateTelegramLink } from "../services/telegramGroups.js";
+import { checkDuplicateWhatsappChannelLink } from "../services/whatsappChannels.js";
+import { checkDuplicateYoutubeChannelLink } from "../services/youtubeChannels.js";
 import { uploadRateLimiter, getClientId } from "../utils/rateLimiter.js";
 import { sanitizeUrl, sanitizeString } from "../utils/inputSanitizer.js";
 
@@ -33,12 +36,15 @@ const initialFormState = {
     whatsappLink: '',
     driveLink: '',
     universityName: '',
-    description: ''
+    description: '',
+    telegramLink: '',
+    whatsappChannelLink: '',
+    youtubeChannelLink: ''
 };
 
 export function UploadForm() {
   const [form, setForm] = useState(initialFormState);
-  const [mode, setMode] = useState('file'); // 'file' | 'links' | 'whatsapp' | 'uni'
+  const [mode, setMode] = useState('file'); // 'file' | 'links' | 'whatsapp' | 'uni' | 'telegram' | 'whatsappChannel' | 'youtube'
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
 
@@ -93,6 +99,42 @@ export function UploadForm() {
       form.whatsappLink = waUrl;
     }
 
+    if (mode === 'telegram') {
+      const telegramUrl = sanitizeUrl(String(form.telegramLink || '').trim());
+      const telegramPattern = /^https?:\/\/(t\.me|telegram\.me)\//i;
+      if (!telegramUrl || !telegramPattern.test(telegramUrl)) {
+        setError(
+          'Please paste a valid Telegram group link (for example https://t.me/... or https://telegram.me/...).'
+        );
+        return;
+      }
+      form.telegramLink = telegramUrl;
+    }
+
+    if (mode === 'whatsappChannel') {
+      const channelUrl = sanitizeUrl(String(form.whatsappChannelLink || '').trim());
+      const channelPattern = /^https?:\/\/(whatsapp\.com\/channel|wa\.me\/channel)\//i;
+      if (!channelUrl || !channelPattern.test(channelUrl)) {
+        setError(
+          'Please paste a valid WhatsApp Channel link (for example https://whatsapp.com/channel/...).'
+        );
+        return;
+      }
+      form.whatsappChannelLink = channelUrl;
+    }
+
+    if (mode === 'youtube') {
+      const youtubeUrl = sanitizeUrl(String(form.youtubeChannelLink || '').trim());
+      const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com\/(channel|c|user|@)|youtu\.be)\//i;
+      if (!youtubeUrl || !youtubePattern.test(youtubeUrl)) {
+        setError(
+          'Please paste a valid YouTube Channel link (for example https://youtube.com/@channel or https://youtube.com/channel/...).'
+        );
+        return;
+      }
+      form.youtubeChannelLink = youtubeUrl;
+    }
+
     // Sanitize text fields
     if (form.subject) {
       form.subject = sanitizeString(form.subject);
@@ -130,6 +172,33 @@ export function UploadForm() {
         if (isDuplicate) {
           setError(
             'This university WhatsApp group link has already been uploaded. Please check the University WhatsApp Groups section or share a different link.'
+          );
+          return;
+        }
+      } else if (mode === 'telegram') {
+        const telegramUrl = String(form.telegramLink || '').trim();
+        const isDuplicate = await checkDuplicateTelegramLink(telegramUrl);
+        if (isDuplicate) {
+          setError(
+            'This Telegram group link has already been uploaded. Please check the Telegram Groups section or share a different link.'
+          );
+          return;
+        }
+      } else if (mode === 'whatsappChannel') {
+        const channelUrl = String(form.whatsappChannelLink || '').trim();
+        const isDuplicate = await checkDuplicateWhatsappChannelLink(channelUrl);
+        if (isDuplicate) {
+          setError(
+            'This WhatsApp Channel link has already been uploaded. Please share a different link.'
+          );
+          return;
+        }
+      } else if (mode === 'youtube') {
+        const youtubeUrl = String(form.youtubeChannelLink || '').trim();
+        const isDuplicate = await checkDuplicateYoutubeChannelLink(youtubeUrl);
+        if (isDuplicate) {
+          setError(
+            'This YouTube Channel link has already been uploaded. Please share a different link.'
           );
           return;
         }
@@ -177,6 +246,33 @@ export function UploadForm() {
           description: form.description || '',
           createdAt: serverTimestamp()
         });
+      } else if (mode === 'telegram') {
+        await addDoc(collection(db, 'telegramGroups'), {
+          subject: form.subject || '',
+          grade: form.grade || '',
+          medium: form.medium || '',
+          url: form.telegramLink,
+          description: form.description || '',
+          createdAt: serverTimestamp()
+        });
+      } else if (mode === 'whatsappChannel') {
+        await addDoc(collection(db, 'whatsappChannels'), {
+          subject: form.subject || '',
+          grade: form.grade || '',
+          medium: form.medium || '',
+          url: form.whatsappChannelLink,
+          description: form.description || '',
+          createdAt: serverTimestamp()
+        });
+      } else if (mode === 'youtube') {
+        await addDoc(collection(db, 'youtubeChannels'), {
+          subject: form.subject || '',
+          grade: form.grade || '',
+          medium: form.medium || '',
+          url: form.youtubeChannelLink,
+          description: form.description || '',
+          createdAt: serverTimestamp()
+        });
       }
       // Other modes (file) can be wired similarly later
     } catch (error) {
@@ -199,6 +295,15 @@ export function UploadForm() {
     } else if (mode === 'uni') {
       message =
         'Thank you for creating space for university students to stay connected. Your WhatsApp group can keep an entire batch learning together, even when campuses are disrupted.';
+    } else if (mode === 'telegram') {
+      message =
+        'Thank you for sharing your Telegram group. Your group helps students connect and share resources during difficult times in Sri Lanka.';
+    } else if (mode === 'whatsappChannel') {
+      message =
+        'Thank you for sharing your WhatsApp Channel. Channels help reach more students with educational content and updates.';
+    } else if (mode === 'youtube') {
+      message =
+        'Thank you for sharing your YouTube Channel. Educational videos can help students learn visually, especially when physical resources are lost.';
     }
     setStatus(message);
 
@@ -423,6 +528,57 @@ export function UploadForm() {
                 color: (theme) =>
                   theme.palette.mode === 'light' ? '#111827' : '#eef2ff'
               },
+              // Telegram groups (5) — cyan
+              '& .MuiToggleButton-root:nth-of-type(5)': {
+                border: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '1px solid rgba(6,182,212,0.35)'
+                    : '1px solid rgba(34,211,238,0.6)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(6,182,212,0.06)'
+                    : 'rgba(15,23,42,0.9)'
+              },
+              '& .MuiToggleButton-root:nth-of-type(5).Mui-selected': {
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(34,211,238,0.6))',
+                color: (theme) =>
+                  theme.palette.mode === 'light' ? '#083344' : '#ecfeff'
+              },
+              // WhatsApp Channels (6) — emerald
+              '& .MuiToggleButton-root:nth-of-type(6)': {
+                border: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '1px solid rgba(16,185,129,0.35)'
+                    : '1px solid rgba(52,211,153,0.6)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(16,185,129,0.06)'
+                    : 'rgba(15,23,42,0.9)'
+              },
+              '& .MuiToggleButton-root:nth-of-type(6).Mui-selected': {
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(52,211,153,0.6))',
+                color: (theme) =>
+                  theme.palette.mode === 'light' ? '#064e3b' : '#d1fae5'
+              },
+              // YouTube Channels (7) — red
+              '& .MuiToggleButton-root:nth-of-type(7)': {
+                border: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? '1px solid rgba(239,68,68,0.35)'
+                    : '1px solid rgba(248,113,113,0.6)',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(239,68,68,0.06)'
+                    : 'rgba(15,23,42,0.9)'
+              },
+              '& .MuiToggleButton-root:nth-of-type(7).Mui-selected': {
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(239,68,68,0.3), rgba(248,113,113,0.6))',
+                color: (theme) =>
+                  theme.palette.mode === 'light' ? '#7f1d1d' : '#fee2e2'
+              },
               '& .MuiToggleButtonGroup-grouped:not(:last-of-type)': {
                 marginRight: 0.5
               }
@@ -432,6 +588,9 @@ export function UploadForm() {
             <ToggleButton value="links">Google Drive links</ToggleButton>
             <ToggleButton value="whatsapp">WhatsApp group links</ToggleButton>
             <ToggleButton value="uni">University groups</ToggleButton>
+            <ToggleButton value="telegram">Telegram groups</ToggleButton>
+            <ToggleButton value="whatsappChannel">WhatsApp Channels</ToggleButton>
+            <ToggleButton value="youtube">YouTube Channels</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -501,84 +660,171 @@ export function UploadForm() {
               </>
             ) : (
               <>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Subject"
-                    id="subject"
-                    name="subject"
-                    placeholder="e.g. Mathematics, History, Science or All subjects"
-                    value={form.subject}
-                    onChange={handleChange}
-                    required
-                    helperText={
-                      mode === 'links'
-                        ? 'For links that help everyone, you can type "All subjects".'
-                        : ''
-                    }
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="level-links-label">Level</InputLabel>
-                    <Select
-                      labelId="level-links-label"
-                      id="level-links"
-                      name="level"
-                      label="Level"
-                      value={form.level}
-                      onChange={handleChange}
-                    >
-                      <MenuItem value="school">School</MenuItem>
-                      <MenuItem value="university">University</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {form.level === 'school' ? (
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth required>
-                      <InputLabel id="grade-links-label">Grade</InputLabel>
-                      <Select
-                        labelId="grade-links-label"
-                        id="grade-links"
-                        name="grade"
-                        label="Grade"
-                        value={form.grade}
+                {(mode === 'links' || mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Subject"
+                        id="subject"
+                        name="subject"
+                        placeholder="e.g. Mathematics, History, Science or All subjects"
+                        value={form.subject}
                         onChange={handleChange}
-                      >
-                        <MenuItem value="">
-                          <em>Grade</em>
-                        </MenuItem>
-                        <MenuItem value="1">Grade 1</MenuItem>
-                        <MenuItem value="2">Grade 2</MenuItem>
-                        <MenuItem value="3">Grade 3</MenuItem>
-                        <MenuItem value="4">Grade 4</MenuItem>
-                        <MenuItem value="5">Grade 5</MenuItem>
-                        <MenuItem value="6">Grade 6</MenuItem>
-                        <MenuItem value="7">Grade 7</MenuItem>
-                        <MenuItem value="8">Grade 8</MenuItem>
-                        <MenuItem value="9">Grade 9</MenuItem>
-                        <MenuItem value="10">Grade 10</MenuItem>
-                        <MenuItem value="11">Grade 11</MenuItem>
-                        <MenuItem value="12">Grade 12</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                ) : (
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="University Name"
-                      id="university-name-links"
-                      name="universityName"
-                      placeholder="e.g. University of Colombo, University of Peradeniya"
-                      value={form.universityName}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Grid>
+                        required
+                        helperText={
+                          mode === 'links'
+                            ? 'For links that help everyone, you can type "All subjects".'
+                            : ''
+                        }
+                      />
+                    </Grid>
+
+                    {mode === 'links' && (
+                      <>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth required>
+                            <InputLabel id="level-links-label">Level</InputLabel>
+                            <Select
+                              labelId="level-links-label"
+                              id="level-links"
+                              name="level"
+                              label="Level"
+                              value={form.level}
+                              onChange={handleChange}
+                            >
+                              <MenuItem value="school">School</MenuItem>
+                              <MenuItem value="university">University</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        {form.level === 'school' ? (
+                          <Grid item xs={12} md={6}>
+                            <FormControl fullWidth required>
+                              <InputLabel id="grade-links-label">Grade</InputLabel>
+                              <Select
+                                labelId="grade-links-label"
+                                id="grade-links"
+                                name="grade"
+                                label="Grade"
+                                value={form.grade}
+                                onChange={handleChange}
+                              >
+                                <MenuItem value="">
+                                  <em>Grade</em>
+                                </MenuItem>
+                                <MenuItem value="1">Grade 1</MenuItem>
+                                <MenuItem value="2">Grade 2</MenuItem>
+                                <MenuItem value="3">Grade 3</MenuItem>
+                                <MenuItem value="4">Grade 4</MenuItem>
+                                <MenuItem value="5">Grade 5</MenuItem>
+                                <MenuItem value="6">Grade 6</MenuItem>
+                                <MenuItem value="7">Grade 7</MenuItem>
+                                <MenuItem value="8">Grade 8</MenuItem>
+                                <MenuItem value="9">Grade 9</MenuItem>
+                                <MenuItem value="10">Grade 10</MenuItem>
+                                <MenuItem value="11">Grade 11</MenuItem>
+                                <MenuItem value="12">Grade 12</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        ) : (
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="University Name"
+                              id="university-name-links"
+                              name="universityName"
+                              placeholder="e.g. University of Colombo, University of Peradeniya"
+                              value={form.universityName}
+                              onChange={handleChange}
+                              required
+                            />
+                          </Grid>
+                        )}
+                      </>
+                    )}
+
+                    {(mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+                      <Grid item xs={12} md={6}>
+                        <FormControl fullWidth required>
+                          <InputLabel id="grade-other-label">Grade</InputLabel>
+                          <Select
+                            labelId="grade-other-label"
+                            id="grade-other"
+                            name="grade"
+                            label="Grade"
+                            value={form.grade}
+                            onChange={handleChange}
+                          >
+                            <MenuItem value="">
+                              <em>Grade</em>
+                            </MenuItem>
+                            <MenuItem value="1">Grade 1</MenuItem>
+                            <MenuItem value="2">Grade 2</MenuItem>
+                            <MenuItem value="3">Grade 3</MenuItem>
+                            <MenuItem value="4">Grade 4</MenuItem>
+                            <MenuItem value="5">Grade 5</MenuItem>
+                            <MenuItem value="6">Grade 6</MenuItem>
+                            <MenuItem value="7">Grade 7</MenuItem>
+                            <MenuItem value="8">Grade 8</MenuItem>
+                            <MenuItem value="9">Grade 9</MenuItem>
+                            <MenuItem value="10">Grade 10</MenuItem>
+                            <MenuItem value="11">Grade 11</MenuItem>
+                            <MenuItem value="12">Grade 12</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    )}
+                  </>
+                )}
+
+                {mode === 'whatsapp' && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Subject"
+                        id="subject"
+                        name="subject"
+                        placeholder="e.g. Mathematics, History, Science"
+                        value={form.subject}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel id="grade-whatsapp-label">Grade</InputLabel>
+                        <Select
+                          labelId="grade-whatsapp-label"
+                          id="grade-whatsapp"
+                          name="grade"
+                          label="Grade"
+                          value={form.grade}
+                          onChange={handleChange}
+                        >
+                          <MenuItem value="">
+                            <em>Grade</em>
+                          </MenuItem>
+                          <MenuItem value="1">Grade 1</MenuItem>
+                          <MenuItem value="2">Grade 2</MenuItem>
+                          <MenuItem value="3">Grade 3</MenuItem>
+                          <MenuItem value="4">Grade 4</MenuItem>
+                          <MenuItem value="5">Grade 5</MenuItem>
+                          <MenuItem value="6">Grade 6</MenuItem>
+                          <MenuItem value="7">Grade 7</MenuItem>
+                          <MenuItem value="8">Grade 8</MenuItem>
+                          <MenuItem value="9">Grade 9</MenuItem>
+                          <MenuItem value="10">Grade 10</MenuItem>
+                          <MenuItem value="11">Grade 11</MenuItem>
+                          <MenuItem value="12">Grade 12</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </>
                 )}
               </>
             )}
@@ -658,6 +904,71 @@ export function UploadForm() {
                   onChange={handleChange}
                   required
                   helperText="WhatsApp group link for sharing notes and updates."
+                />
+              </Grid>
+            )}
+            {mode === 'telegram' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  id="telegram-link"
+                  name="telegramLink"
+                  type="url"
+                  label="Telegram Group Link (required)"
+                  placeholder="https://t.me/... or https://telegram.me/..."
+                  value={form.telegramLink}
+                  onChange={handleChange}
+                  required
+                  helperText="Telegram group link for sharing notes and updates."
+                />
+              </Grid>
+            )}
+            {mode === 'whatsappChannel' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  id="whatsapp-channel-link"
+                  name="whatsappChannelLink"
+                  type="url"
+                  label="WhatsApp Channel Link (required)"
+                  placeholder="https://whatsapp.com/channel/..."
+                  value={form.whatsappChannelLink}
+                  onChange={handleChange}
+                  required
+                  helperText="WhatsApp Channel link for broadcasting educational content."
+                />
+              </Grid>
+            )}
+            {mode === 'youtube' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  id="youtube-channel-link"
+                  name="youtubeChannelLink"
+                  type="url"
+                  label="YouTube Channel Link (required)"
+                  placeholder="https://youtube.com/@channel or https://youtube.com/channel/..."
+                  value={form.youtubeChannelLink}
+                  onChange={handleChange}
+                  required
+                  helperText="YouTube Channel link for educational videos and tutorials."
+                />
+              </Grid>
+            )}
+
+            {(mode === 'telegram' || mode === 'whatsappChannel' || mode === 'youtube') && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  id="description-other"
+                  name="description"
+                  label="Description (optional)"
+                  placeholder="Short description about this group or channel"
+                  value={form.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                  helperText="Optional: Add a brief description to help students understand what this group or channel offers."
                 />
               </Grid>
             )}
