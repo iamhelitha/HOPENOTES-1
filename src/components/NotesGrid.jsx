@@ -62,6 +62,7 @@ export function NotesGrid({ notes }) {
                       {note.type === 'telegram' && '💬 Telegram'}
                       {note.type === 'whatsappChannel' && '📢 WhatsApp Channel'}
                       {note.type === 'youtube' && '▶️ YouTube'}
+                      {note.type === 'website' && '🌐 Education Website'}
                     </span>
                   )}
                 </div>
