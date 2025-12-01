@@ -110,12 +110,33 @@ export function TelegramGroups() {
                 {group.subject || 'Telegram Study Group'}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mb: group.description ? 0.2 : 0, flexWrap: 'wrap' }}>
-                {group.grade && (
-                  <Chip
-                    size="small"
-                    label={`Grade ${group.grade}`}
-                    sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
-                  />
+                {group.level === 'university' ? (
+                  <>
+                    {group.universityName && (
+                      <Chip
+                        size="small"
+                        label={group.universityName}
+                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                      />
+                    )}
+                    {group.year && (
+                      <Chip
+                        size="small"
+                        label={`Year ${group.year}`}
+                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {group.grade && (
+                      <Chip
+                        size="small"
+                        label={`Grade ${group.grade}`}
+                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                      />
+                    )}
+                  </>
                 )}
                 {group.medium && group.medium !== 'all' && (
                   <Chip
