@@ -22,6 +22,9 @@ import { getAppTheme } from './theme.js';
 import { fetchDriveLinks } from './services/driveLinks.js';
 import { fetchWhatsappGroups } from './services/whatsappGroups.js';
 import { fetchUniversityGroups } from './services/universityGroups.js';
+import { fetchTelegramGroups } from './services/telegramGroups.js';
+import { fetchWhatsappChannels } from './services/whatsappChannels.js';
+import { fetchYoutubeChannels } from './services/youtubeChannels.js';
 import footerLogoImage from './images/Gemini_Generated_Image_d5zif3d5zif3d5zi.png';
 
 export default function App() {
@@ -49,14 +52,17 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [links, whatsapp, uni] = await Promise.all([
+        const [links, whatsapp, uni, telegram, whatsappChannels, youtube] = await Promise.all([
           fetchDriveLinks(),
           fetchWhatsappGroups(),
-          fetchUniversityGroups()
+          fetchUniversityGroups(),
+          fetchTelegramGroups(),
+          fetchWhatsappChannels(),
+          fetchYoutubeChannels()
         ]);
 
         // Map driveLinks docs to the shape expected by NotesGrid
-        const mappedNotes = links.map((link) => ({
+        const driveNotes = links.map((link) => ({
           id: link.id,
           subject: link.description || 'Google Drive resource',
           grade: link.grade || link.year || '',
@@ -66,9 +72,61 @@ export default function App() {
           region: '',
           url: link.url,
           level: link.level || 'school',
-          universityName: link.universityName || ''
+          universityName: link.universityName || '',
+          type: 'drive'
         }));
-        setNotes(mappedNotes);
+
+        // Map telegram groups
+        const telegramNotes = telegram.map((group) => ({
+          id: group.id,
+          subject: group.subject || 'Telegram Group',
+          grade: group.grade || '',
+          medium: group.medium || '',
+          curriculum: 'Telegram Group',
+          title: group.subject || 'Telegram Study Group',
+          region: '',
+          url: group.url,
+          level: 'school',
+          universityName: '',
+          type: 'telegram',
+          description: group.description || ''
+        }));
+
+        // Map WhatsApp Channels
+        const whatsappChannelNotes = whatsappChannels.map((channel) => ({
+          id: channel.id,
+          subject: channel.subject || 'WhatsApp Channel',
+          grade: channel.grade || '',
+          medium: channel.medium || '',
+          curriculum: 'WhatsApp Channel',
+          title: channel.subject || 'WhatsApp Channel',
+          region: '',
+          url: channel.url,
+          level: 'school',
+          universityName: '',
+          type: 'whatsappChannel',
+          description: channel.description || ''
+        }));
+
+        // Map YouTube Channels
+        const youtubeNotes = youtube.map((channel) => ({
+          id: channel.id,
+          subject: channel.subject || 'YouTube Channel',
+          grade: channel.grade || '',
+          medium: channel.medium || '',
+          curriculum: 'YouTube Channel',
+          title: channel.subject || 'YouTube Channel',
+          region: '',
+          url: channel.url,
+          level: 'school',
+          universityName: '',
+          type: 'youtube',
+          description: channel.description || ''
+        }));
+
+        // Combine all notes
+        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes];
+        setNotes(allNotes);
 
         setStats({
           notes: links.length,
