@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { fetchWhatsappChannels } from '../services/whatsappChannels.js';
+import { fetchYoutubeChannels } from '../services/youtubeChannels.js';
 import { Box, Paper, Typography, Button, CircularProgress, Chip } from '@mui/material';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
-export function WhatsappChannels({ channels: propChannels }) {
+export function YoutubeChannels({ channels: propChannels }) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +17,7 @@ export function WhatsappChannels({ channels: propChannels }) {
     } else {
       const load = async () => {
         try {
-          const data = await fetchWhatsappChannels();
+          const data = await fetchYoutubeChannels();
           setChannels(data);
         } finally {
           setLoading(false);
@@ -52,11 +52,11 @@ export function WhatsappChannels({ channels: propChannels }) {
         })}
       >
         <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-          No WhatsApp Channels yet
+          No YouTube Channels yet
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          When volunteers share WhatsApp Channels, they&apos;ll appear here so students can subscribe
-          and receive educational content and updates.
+          When volunteers share YouTube Channels, they&apos;ll appear here so students can subscribe
+          and watch educational videos and tutorials.
         </Typography>
       </Box>
     );
@@ -77,12 +77,12 @@ export function WhatsappChannels({ channels: propChannels }) {
             gap: { xs: 1.2, sm: 1.4, md: 1.4 },
             border:
               theme.palette.mode === 'light'
-                ? '1px solid rgba(16,185,129,0.4)'
-                : '1px solid rgba(52,211,153,0.6)',
+                ? '1px solid rgba(239,68,68,0.4)'
+                : '1px solid rgba(248,113,113,0.6)',
             bgcolor:
               theme.palette.mode === 'light'
-                ? 'rgba(236,253,245,0.6)'
-                : 'rgba(6,78,59,0.2)'
+                ? 'rgba(254,242,242,0.6)'
+                : 'rgba(69,10,10,0.2)'
           })}
         >
           <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.1, md: 1.1 }, flex: 1 }}>
@@ -95,13 +95,13 @@ export function WhatsappChannels({ channels: propChannels }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 background:
-                  'radial-gradient(circle at 30% 0%, #d1fae5, #10b981)',
-                boxShadow: '0 8px 22px rgba(16,185,129,0.55)',
+                  'radial-gradient(circle at 30% 0%, #fee2e2, #ef4444)',
+                boxShadow: '0 8px 22px rgba(239,68,68,0.55)',
                 color: '#f9fafb',
                 flexShrink: 0
               }}
             >
-              <WhatsAppIcon sx={{ fontSize: { xs: 18, sm: 20, md: 20 } }} />
+              <YouTubeIcon sx={{ fontSize: { xs: 18, sm: 20, md: 20 } }} />
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography
@@ -115,7 +115,7 @@ export function WhatsappChannels({ channels: propChannels }) {
                   overflow: 'hidden'
                 }}
               >
-                {channel.subject || 'WhatsApp Channel'}
+                {channel.subject || 'YouTube Channel'}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mb: channel.description ? 0.2 : 0, flexWrap: 'wrap' }}>
                 {channel.level === 'university' ? (
@@ -180,21 +180,21 @@ export function WhatsappChannels({ channels: propChannels }) {
               px: { xs: 2, sm: 2.5, md: 2.5 },
               borderColor: (theme) =>
                 theme.palette.mode === 'light'
-                  ? 'rgba(16,185,129,0.5)'
-                  : 'rgba(52,211,153,0.6)',
+                  ? 'rgba(239,68,68,0.5)'
+                  : 'rgba(248,113,113,0.6)',
               color: (theme) =>
                 theme.palette.mode === 'light'
-                  ? '#059669'
-                  : '#34d399',
+                  ? '#dc2626'
+                  : '#f87171',
               '&:hover': {
                 borderColor: (theme) =>
                   theme.palette.mode === 'light'
-                    ? 'rgba(16,185,129,0.8)'
-                    : 'rgba(52,211,153,0.9)',
+                    ? 'rgba(239,68,68,0.8)'
+                    : 'rgba(248,113,113,0.9)',
                 bgcolor: (theme) =>
                   theme.palette.mode === 'light'
-                    ? 'rgba(16,185,129,0.1)'
-                    : 'rgba(52,211,153,0.15)'
+                    ? 'rgba(239,68,68,0.1)'
+                    : 'rgba(248,113,113,0.15)'
               }
             }}
           >
