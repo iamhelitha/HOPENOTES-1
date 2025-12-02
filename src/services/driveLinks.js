@@ -1,4 +1,4 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 export async function fetchDriveLinks() {
@@ -13,12 +13,13 @@ export async function fetchDriveLinks() {
 export async function checkDuplicateDriveLink(url) {
   try {
     const normalizedUrl = url.trim().toLowerCase();
-    // Fetch all drive links and check in memory for case-insensitive matching
-    const allLinks = await fetchDriveLinks();
-    return allLinks.some((link) => {
-      const existingUrl = (link.url || "").trim().toLowerCase();
-      return existingUrl === normalizedUrl;
-    });
+    // Use Firestore query to check for exact URL match (more efficient than fetching all)
+    const q = query(
+      collection(db, "driveLinks"),
+      where("url", "==", url.trim())
+    );
+    const snap = await getDocs(q);
+    return !snap.empty; // If any docs found, it's a duplicate
   } catch (error) {
     console.error("Error checking duplicate drive link:", error);
     return false;
