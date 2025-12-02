@@ -44,6 +44,7 @@ export default function App() {
     whatsapp: 0,
     university: 0
   });
+  const [currentHash, setCurrentHash] = useState(window.location.hash || '#top');
 
   const theme = useMemo(() => getAppTheme(mode), [mode]);
 
@@ -54,6 +55,21 @@ export default function App() {
   const toggleMode = () => {
     setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
+
+  // Track which hash (section) is active so we can show HN News as a separate view
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentHash(window.location.hash || '#top');
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Initialize on first render in case user lands directly on /#hn-news
+    handleHashChange();
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -69,19 +85,20 @@ export default function App() {
           fetchFileUploads()
         ]);
 
-        // Map driveLinks docs to the shape expected by NotesGrid
+        // Map driveLinks + OneDrive docs to the shape expected by NotesGrid
         const driveNotes = links.map((link) => ({
           id: link.id,
-          subject: link.description || 'Google Drive resource',
+          subject: link.description || 'Cloud drive resource',
           grade: link.grade || link.year || '',
           medium: link.medium || '',
-          curriculum: 'Google Drive',
+          curriculum: link.provider === 'onedrive' ? 'OneDrive' : 'Google Drive',
           title: link.description || 'Shared resource',
           region: '',
           url: link.url,
           level: link.level || 'school',
           universityName: link.universityName || '',
-          type: 'drive'
+          type: 'drive',
+          provider: link.provider === 'onedrive' ? 'onedrive' : 'google'
         }));
 
         // Map telegram groups
@@ -171,8 +188,20 @@ export default function App() {
         console.log('File upload notes mapped:', fileUploadNotes.length);
         console.log('Sample file upload note:', fileUploadNotes[0]);
 
-        // Combine all notes
-        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes, ...websiteNotes, ...fileUploadNotes];
+        // Ensure Google Drive notes come before OneDrive notes
+        const googleDriveNotes = driveNotes.filter((n) => n.provider !== 'onedrive');
+        const oneDriveNotes = driveNotes.filter((n) => n.provider === 'onedrive');
+
+        // Combine all notes (Google Drive first, then OneDrive, then others)
+        const allNotes = [
+          ...googleDriveNotes,
+          ...oneDriveNotes,
+          ...telegramNotes,
+          ...whatsappChannelNotes,
+          ...youtubeNotes,
+          ...websiteNotes,
+          ...fileUploadNotes
+        ];
         console.log('Total notes (including file uploads):', allNotes.length);
         setNotes(allNotes);
 
@@ -204,6 +233,8 @@ export default function App() {
     return filtered;
   }, [notes, levelFilter, gradeFilter]);
 
+  const showHNNewsOnly = currentHash === '#hn-news';
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -211,9 +242,11 @@ export default function App() {
         <Navbar mode={mode} onToggleMode={toggleMode} />
 
         <main>
-          <Hero stats={stats} />
+          {!showHNNewsOnly && (
+            <>
+              <Hero stats={stats} />
 
-          <section id="browse" className="section">
+              <section id="browse" className="section">
             <div className="section-header">
               <h2>Browse Notes</h2>
               <p className="section-subtitle">
@@ -294,97 +327,135 @@ export default function App() {
             ) : (
               <NotesGrid notes={filteredNotes} />
             )}
-          </section>
+              </section>
 
-          <section id="whatsapp-groups" className="section">
+              <section id="whatsapp-groups" className="section">
+                <div className="section-header">
+                  <h2>WhatsApp Study Groups</h2>
+                  <p className="section-subtitle">
+                    Join community-led WhatsApp groups where volunteers share updates, tips, and
+                    extra help after disasters.
+                  </p>
+                </div>
+
+                <WhatsappGroups />
+              </section>
+
+              <section id="university-groups" className="section">
+                <div className="section-header">
+                  <h2>University WhatsApp Groups</h2>
+                  <p className="section-subtitle">
+                    Find your batch or faculty WhatsApp groups to stay connected, share notes, and
+                    support each other through disruptions.
+                  </p>
+                </div>
+
+                <UniversityGroups />
+              </section>
+
+              <section id="telegram-groups" className="section">
+                <div className="section-header">
+                  <h2>Telegram Study Groups</h2>
+                  <p className="section-subtitle">
+                    Telegram groups where students and teachers can share files, links, and quick help.
+                  </p>
+                </div>
+
+                <TelegramGroups />
+              </section>
+
+              <section id="whatsapp-channels" className="section">
+                <div className="section-header">
+                  <h2>WhatsApp Channels</h2>
+                  <p className="section-subtitle">
+                    Follow channels that regularly post educational updates, notes, and videos for Sri Lankan students.
+                  </p>
+                </div>
+
+                <WhatsappChannels />
+              </section>
+
+              <section id="youtube-channels" className="section">
+                <div className="section-header">
+                  <h2>YouTube Channels</h2>
+                  <p className="section-subtitle">
+                    Discover learning-focused YouTube channels that explain concepts, past papers, and more.
+                  </p>
+                </div>
+
+                <YoutubeChannels />
+              </section>
+
+              <section id="education-websites" className="section">
+                <div className="section-header">
+                  <h2>Education Websites</h2>
+                  <p className="section-subtitle">
+                    Discover free educational websites that provide learning resources, courses, and study materials to help students continue their education online.
+                  </p>
+                </div>
+
+                <EducationWebsites />
+              </section>
+
+              <section id="donate" className="section">
+                <div className="section-header">
+                  <h2>Donate / Upload Notes</h2>
+                  <p className="section-subtitle">
+                    Share your notes, links, and study groups so another student can keep learning, even after disaster.
+                  </p>
+                </div>
+
+                <UploadForm />
+              </section>
+
+              <section id="feedback" className="section">
+                <div className="section-header">
+                  <h2>Feedback</h2>
+                  <p className="section-subtitle">
+                    Share your thoughts, suggestions, or a short thank-you so we can keep improving HopeNotes for everyone.
+                  </p>
+                </div>
+
+                <Feedback />
+              </section>
+            </>
+          )}
+
+          {/* HN News as a separate \"page\" view */}
+          <section id="hn-news" className="section" style={{ display: showHNNewsOnly ? 'block' : 'none' }}>
             <div className="section-header">
-              <h2>WhatsApp Study Groups</h2>
+              <h2>HN News</h2>
               <p className="section-subtitle">
-                Join community-led WhatsApp groups where volunteers share updates, tips, and
-                extra help after disasters.
+                Stories, updates, and small wins from students, teachers, and volunteers using HopeNotes
+                across Sri Lanka.
               </p>
             </div>
 
-            <WhatsappGroups />
-          </section>
-
-          <section id="university-groups" className="section">
-            <div className="section-header">
-              <h2>University WhatsApp Groups</h2>
-              <p className="section-subtitle">
-                Find your batch or faculty WhatsApp groups to stay connected, share notes, and
-                support each other through disruptions.
-              </p>
-            </div>
-
-            <UniversityGroups />
-          </section>
-
-          <section id="telegram-groups" className="section">
-            <div className="section-header">
-              <h2>Telegram Study Groups</h2>
-              <p className="section-subtitle">
-                Join Telegram groups where volunteers share notes, updates, and study materials to help students continue learning after disasters.
-              </p>
-            </div>
-
-            <TelegramGroups />
-          </section>
-
-          <section id="whatsapp-channels" className="section">
-            <div className="section-header">
-              <h2>WhatsApp Channels</h2>
-              <p className="section-subtitle">
-                Subscribe to WhatsApp Channels for educational content, updates, and study materials broadcasted to help students stay informed and learn.
-              </p>
-            </div>
-
-            <WhatsappChannels />
-          </section>
-
-          <section id="youtube-channels" className="section">
-            <div className="section-header">
-              <h2>YouTube Channels</h2>
-              <p className="section-subtitle">
-                Subscribe to YouTube Channels for educational videos, tutorials, and lessons to help students learn visually, especially when physical resources are lost.
-              </p>
-            </div>
-
-            <YoutubeChannels />
-          </section>
-
-          <section id="education-websites" className="section">
-            <div className="section-header">
-              <h2>Education Websites</h2>
-              <p className="section-subtitle">
-                Discover free educational websites that provide learning resources, courses, and study materials to help students continue their education online.
-              </p>
-            </div>
-
-            <EducationWebsites />
-          </section>
-
-          <section id="donate" className="section section-alt">
-            <div className="section-header">
-              <h2>Donate / Upload Notes</h2>
-              <p className="section-subtitle">
-                Share your notes to help students catch up after floods and other disasters.
-              </p>
-            </div>
-
-            <UploadForm />
-          </section>
-
-          <section id="feedback" className="section">
-            <div className="section-header">
-              <h2>Feedback</h2>
-              <p className="section-subtitle">
-                Share your thoughts, suggestions, or experiences to help us improve HopeNotes for
-                students across Sri Lanka.
-              </p>
-            </div>
-
-            <Feedback />
+            <Container maxWidth="lg">
+              <Box
+                sx={{
+                  borderRadius: 3,
+                  p: { xs: 2.5, sm: 3, md: 3.5 },
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'light'
+                      ? 'rgba(240,249,255,0.9)'
+                      : 'rgba(15,23,42,0.9)',
+                  border: (theme) =>
+                    theme.palette.mode === 'light'
+                      ? '1px dashed rgba(59,130,246,0.5)'
+                      : '1px dashed rgba(96,165,250,0.8)',
+                  textAlign: 'center'
+                }}
+              >
+                <p className="section-subtitle" style={{ marginBottom: '0.5rem' }}>
+                  HN News is coming soon.
+                </p>
+                <p className="section-subtitle">
+                  We&apos;ll highlight disaster recovery stories, new features, and real impact from the
+                  HopeNotes community here.
+                </p>
+              </Box>
+            </Container>
           </section>
         </main>
 
