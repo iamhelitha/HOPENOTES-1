@@ -9,7 +9,11 @@ import {
   MenuItem,
   CircularProgress,
   Container,
-  Typography
+  Typography,
+  Grid,
+  Paper,
+  Button,
+  TextField
 } from '@mui/material';
 import { Navbar } from './components/Navbar.jsx';
 import { Hero } from './components/Hero.jsx';
@@ -33,8 +37,10 @@ import { fetchWhatsappChannels } from './services/whatsappChannels.js';
 import { fetchYoutubeChannels } from './services/youtubeChannels.js';
 import { fetchEducationWebsites } from './services/educationWebsites.js';
 import { fetchFileUploads } from './services/fileUploads.js';
+import { fetchNews, addNewsItem } from './services/news.js';
 import footerLogoImage from './images/Gemini_Generated_Image_d5zif3d5zif3d5zi.png';
 import newsBackgroundImage from './images/Gemini_Generated_Image_y686jby686jby686.png';
+import { uploadFileToCloudinary } from './utils/cloudinaryUpload.js';
 
 export default function App() {
   const [mode, setMode] = useState('light');
@@ -48,6 +54,17 @@ export default function App() {
     university: 0
   });
   const [currentHash, setCurrentHash] = useState(window.location.hash || '#top');
+  const [newsItems, setNewsItems] = useState([]);
+  const [newsForm, setNewsForm] = useState({
+    title: '',
+    description: '',
+    secretCode: ''
+  });
+  const [newsImageFile, setNewsImageFile] = useState(null);
+  const [newsUploadProgress, setNewsUploadProgress] = useState(0);
+  const [newsSubmitting, setNewsSubmitting] = useState(false);
+  const [newsError, setNewsError] = useState('');
+  const [newsStatus, setNewsStatus] = useState('');
 
   const theme = useMemo(() => getAppTheme(mode), [mode]);
 
@@ -77,7 +94,7 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads] = await Promise.all([
+        const [links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news] = await Promise.all([
           fetchDriveLinks(),
           fetchOneDriveLinks(),
           fetchWhatsappGroups(),
@@ -86,7 +103,8 @@ export default function App() {
           fetchWhatsappChannels(),
           fetchYoutubeChannels(),
           fetchEducationWebsites(),
-          fetchFileUploads()
+          fetchFileUploads(),
+          fetchNews()
         ]);
 
         // Map Google Drive docs
@@ -220,6 +238,7 @@ export default function App() {
         ];
         console.log('Total notes (including file uploads):', allNotes.length);
         setNotes(allNotes);
+        setNewsItems(news);
 
         setStats({
           notes: links.length + fileUploads.length,
@@ -250,6 +269,71 @@ export default function App() {
   }, [notes, levelFilter, gradeFilter]);
 
   const isStandalonePage = currentHash === '#hn-news' || currentHash === '#about';
+
+  const handleNewsFieldChange = (event) => {
+    const { name, value } = event.target;
+    setNewsError('');
+    setNewsStatus('');
+    setNewsForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewsSubmit = async (event) => {
+    event.preventDefault();
+    setNewsError('');
+    setNewsStatus('');
+
+    if (newsForm.secretCode.trim() !== '2525') {
+      setNewsError('Secret code is incorrect.');
+      return;
+    }
+
+    if (!newsForm.title.trim() || !newsForm.description.trim()) {
+      setNewsError('Please add a news caption and a short description.');
+      return;
+    }
+
+    // Optional image upload (PNG/JPG/JPEG only) via Cloudinary
+    let uploadedImageUrl = '';
+    if (newsImageFile) {
+      const allowedImageTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedImageTypes.includes(newsImageFile.type)) {
+        setNewsError('Image must be PNG or JPG.');
+        return;
+      }
+      try {
+        setNewsUploadProgress(0);
+        const uploadResult = await uploadFileToCloudinary(newsImageFile, (p) =>
+          setNewsUploadProgress(p)
+        );
+        uploadedImageUrl = uploadResult.url;
+      } catch (err) {
+        console.error('Error uploading news image', err);
+        setNewsError(err.message || 'Failed to upload news image. Please try again.');
+        return;
+      } finally {
+        setNewsUploadProgress(0);
+      }
+    }
+
+    setNewsSubmitting(true);
+    try {
+      await addNewsItem({
+        title: newsForm.title.trim(),
+        description: newsForm.description.trim(),
+        imageUrl: uploadedImageUrl
+      });
+      const fresh = await fetchNews();
+      setNewsItems(fresh);
+      setNewsStatus('Thank you for sharing this news. Your story will help others understand what students are facing.');
+      setNewsForm({ title: '', description: '', secretCode: '' });
+      setNewsImageFile(null);
+    } catch (error) {
+      console.error('Error submitting news', error);
+      setNewsError('Something went wrong while saving this news. Please try again.');
+    } finally {
+      setNewsSubmitting(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -304,8 +388,8 @@ export default function App() {
               </FormControl>
 
               {levelFilter === 'all' || levelFilter === 'school' ? (
-                <FormControl
-                  size="small"
+              <FormControl
+                size="small"
                   sx={{ minWidth: { xs: '100%', sm: 180 }, width: { xs: '100%', sm: 'auto' } }}
               >
                 <InputLabel id="browse-grade-filter-label">Grade</InputLabel>
@@ -443,19 +527,17 @@ export default function App() {
             className="section"
             style={{ display: currentHash === '#hn-news' ? 'block' : 'none', paddingTop: 0, paddingBottom: 0 }}
           >
+            {/* Hero image */}
             <Box
               sx={{
                 position: 'relative',
-                height: { xs: 400, sm: 450, md: 650 },
+                height: { xs: 320, sm: 380, md: 420 },
                 width: '100vw',
-                ml: 'calc(50% - 50vw)', // make the hero image full-width on all screen sizes
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
+                ml: 'calc(50% - 50vw)',
+                overflow: 'hidden',
+                mb: { xs: 4, sm: 5 }
               }}
             >
-              {/* Background image */}
               <Box
                 sx={{
                   position: 'absolute',
@@ -464,30 +546,19 @@ export default function App() {
                   backgroundSize: 'cover',
                   backgroundPosition: 'center center',
                   backgroundRepeat: 'no-repeat',
-                  filter: 'brightness(0.7)',
-                  transform: 'scale(1.02)'
+                  filter: 'brightness(0.7)'
                 }}
               />
-
-              {/* Overlay */}
               <Box
                 sx={{
                   position: 'absolute',
                   inset: 0,
                   background:
-                    'radial-gradient(circle at 15% 0%, rgba(15,23,42,0.35), transparent 55%), linear-gradient(to bottom, rgba(15,23,42,0.65), rgba(15,23,42,0.85))'
+                    'radial-gradient(circle at 15% 0%, rgba(15,23,42,0.35), transparent 55%), linear-gradient(to bottom, rgba(15,23,42,0.65), rgba(15,23,42,0.9))'
                 }}
               />
-
-              {/* Content */}
-              <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, py: { xs: 6, md: 8 } }}>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    color: '#f9fafb',
-                    px: { xs: 2, sm: 3, md: 4 }
-                  }}
-                >
+              <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, py: { xs: 4, md: 6 } }}>
+                <Box sx={{ textAlign: 'center', color: '#f9fafb', px: { xs: 2, sm: 3, md: 4 } }}>
                   <Typography
                     variant="h3"
                     sx={{
@@ -509,23 +580,185 @@ export default function App() {
                   >
                     Voices from the floods. Stories of courage. Updates from the HopeNotes community.
                   </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      maxWidth: 640,
-                      mx: 'auto',
-                      fontSize: { xs: 13.5, sm: 14.5, md: 15 },
-                      lineHeight: 1.8,
-                      color: 'rgba(226,232,240,0.95)'
-                    }}
-                  >
-                    This page will soon share short stories, news, and real snapshots of how students,
-                    teachers, and volunteers across Sri Lanka are using HopeNotes to keep learning
-                    alive during floods and other disasters.
-                  </Typography>
                 </Box>
               </Container>
             </Box>
+
+            {/* News grid */}
+            <Container maxWidth="lg" sx={{ mt: { xs: 1, sm: 2 }, mb: { xs: 4, sm: 5 } }}>
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {newsItems.slice(0, 6).map((item) => (
+                  <Grid key={item.id} item xs={12} sm={6} md={4}>
+                    <Paper
+                      elevation={3}
+                      sx={{
+                        borderRadius: 3,
+                        overflow: 'hidden',
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          pt: '56.25%',
+                          backgroundImage: `url(${item.imageUrl || newsBackgroundImage})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
+                      />
+                      <Box sx={{ p: { xs: 1.8, sm: 2.2 } }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: 700, mb: 1, fontSize: { xs: 14, sm: 15 } }}
+                        >
+                          {item.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: { xs: 13, sm: 13.5 },
+                            color: 'text.secondary',
+                            mb: 1.5
+                          }}
+                        >
+                          {item.description}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          onClick={() => {
+                            const text = `${item.title}\n\n${item.description}\n\nShared from HopeNotes News.`;
+                            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                            window.open(url, '_blank', 'noopener');
+                          }}
+                        >
+                          Share on WhatsApp
+                        </Button>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))}
+
+                {newsItems.length === 0 && (
+                  <Grid item xs={12}>
+                    <Typography
+                      variant="body2"
+                      sx={{ textAlign: 'center', color: 'text.secondary', mt: { xs: 1, sm: 2 } }}
+                    >
+                      No news has been posted yet. Be the first to share a story from the ground.
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+
+              {/* Add news form trigger and form */}
+              <Box sx={{ mt: { xs: 4, sm: 5 }, textAlign: 'center' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 1.5, color: 'text.secondary', fontSize: { xs: 13, sm: 14 } }}
+                >
+                  Have an update or story to share from your area?
+                </Typography>
+                <Box
+                  component="form"
+                  onSubmit={handleNewsSubmit}
+                  sx={{
+                    maxWidth: 520,
+                    mx: 'auto',
+                    p: { xs: 2, sm: 2.5 },
+                    borderRadius: 3,
+                    border: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? '1px solid rgba(148,163,184,0.4)'
+                        : '1px solid rgba(148,163,184,0.6)',
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? 'rgba(248,250,252,0.9)'
+                        : 'rgba(15,23,42,0.9)'
+                  }}
+                >
+                  {newsError && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mb: 1.5, color: '#b91c1c', fontWeight: 600, fontSize: 13 }}
+                    >
+                      {newsError}
+                    </Typography>
+                  )}
+                  {newsStatus && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mb: 1.5, color: '#15803d', fontWeight: 600, fontSize: 13 }}
+                    >
+                      {newsStatus}
+                    </Typography>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    label="News caption"
+                    name="title"
+                    value={newsForm.title}
+                    onChange={handleNewsFieldChange}
+                    margin="dense"
+                    size="small"
+                  />
+                  <TextField
+                    fullWidth
+                    label="News description"
+                    name="description"
+                    value={newsForm.description}
+                    onChange={handleNewsFieldChange}
+                    margin="dense"
+                    size="small"
+                    multiline
+                    minRows={3}
+                  />
+                  <TextField
+                    fullWidth
+                    type="file"
+                    label="News image (PNG / JPG, optional)"
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{ accept: 'image/png,image/jpeg,image/jpg' }}
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      setNewsImageFile(file || null);
+                    }}
+                    margin="dense"
+                    size="small"
+                  />
+                  {newsUploadProgress > 0 && (
+                    <Typography
+                      variant="caption"
+                      sx={{ display: 'block', mt: 0.5, textAlign: 'right' }}
+                    >
+                      Uploading image... {newsUploadProgress}%
+                    </Typography>
+                  )}
+                  <TextField
+                    fullWidth
+                    label="Secret code"
+                    name="secretCode"
+                    type="password"
+                    value={newsForm.secretCode}
+                    onChange={handleNewsFieldChange}
+                    margin="dense"
+                    size="small"
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    sx={{ mt: 2 }}
+                    disabled={newsSubmitting}
+                  >
+                    {newsSubmitting ? 'Submitting...' : 'Submit News'}
+                  </Button>
+                </Box>
+              </Box>
+            </Container>
           </section>
 
           {/* About Us as a separate \"page\" view */}
