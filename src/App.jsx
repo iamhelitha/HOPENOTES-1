@@ -65,6 +65,15 @@ export default function App() {
   const [newsSubmitting, setNewsSubmitting] = useState(false);
   const [newsError, setNewsError] = useState('');
   const [newsStatus, setNewsStatus] = useState('');
+  const [dataCache, setDataCache] = useState(null);
+  const [cacheTimestamp, setCacheTimestamp] = useState(0);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  const [whatsappGroups, setWhatsappGroups] = useState([]);
+  const [universityGroups, setUniversityGroups] = useState([]);
+  const [telegramGroups, setTelegramGroups] = useState([]);
+  const [whatsappChannels, setWhatsappChannels] = useState([]);
+  const [youtubeChannels, setYoutubeChannels] = useState([]);
+  const [educationWebsites, setEducationWebsites] = useState([]);
 
   const theme = useMemo(() => getAppTheme(mode), [mode]);
 
@@ -91,23 +100,9 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news] = await Promise.all([
-          fetchDriveLinks(),
-          fetchOneDriveLinks(),
-          fetchWhatsappGroups(),
-          fetchUniversityGroups(),
-          fetchTelegramGroups(),
-          fetchWhatsappChannels(),
-          fetchYoutubeChannels(),
-          fetchEducationWebsites(),
-          fetchFileUploads(),
-          fetchNews()
-        ]);
-
-        // Map Google Drive docs
+  // Process data function to avoid duplication
+  const processData = (links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news) => {
+    // Map Google Drive docs
         const driveNotes = links.map((link) => ({
           id: link.id,
           subject: link.description || 'Google Drive resource',
@@ -245,13 +240,87 @@ export default function App() {
           whatsapp: whatsapp.length,
           university: uni.length
         });
+        setNewsItems(news || []);
+        // Store data for child components to prevent duplicate fetches
+        setWhatsappGroups(whatsapp || []);
+        setUniversityGroups(uni || []);
+        setTelegramGroups(telegram || []);
+        setWhatsappChannels(whatsappChannels || []);
+        setYoutubeChannels(youtube || []);
+        setEducationWebsites(websites || []);
+      };
+
+  useEffect(() => {
+    const loadData = async () => {
+      // Check cache first
+      const now = Date.now();
+      if (dataCache && (now - cacheTimestamp) < CACHE_DURATION) {
+        // Use cached data
+        const { links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news } = dataCache;
+        processData(links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news);
+        setLoadingNotes(false);
+        return;
+      }
+
+      try {
+        const [links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news] = await Promise.all([
+          fetchDriveLinks(),
+          fetchOneDriveLinks(),
+          fetchWhatsappGroups(),
+          fetchUniversityGroups(),
+          fetchTelegramGroups(),
+          fetchWhatsappChannels(),
+          fetchYoutubeChannels(),
+          fetchEducationWebsites(),
+          fetchFileUploads(),
+          fetchNews()
+        ]);
+
+        // Cache the data
+        setDataCache({ links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news });
+        setCacheTimestamp(now);
+
+        processData(links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news);
+      } catch (error) {
+        console.error('Error loading data:', error);
       } finally {
         setLoadingNotes(false);
       }
     };
 
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  // Function to refresh data (can be called after uploads)
+  const refreshData = () => {
+    setDataCache(null);
+    setCacheTimestamp(0);
+    const loadData = async () => {
+      try {
+        const [links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news] = await Promise.all([
+          fetchDriveLinks(),
+          fetchOneDriveLinks(),
+          fetchWhatsappGroups(),
+          fetchUniversityGroups(),
+          fetchTelegramGroups(),
+          fetchWhatsappChannels(),
+          fetchYoutubeChannels(),
+          fetchEducationWebsites(),
+          fetchFileUploads(),
+          fetchNews()
+        ]);
+
+        const now = Date.now();
+        setDataCache({ links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news });
+        setCacheTimestamp(now);
+        processData(links, oneDriveLinks, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads, news);
+      } catch (error) {
+        console.error('Error refreshing data:', error);
+      }
+    };
+    loadData();
+  };
 
   const filteredNotes = useMemo(() => {
     const filtered = notes.filter((note) => {
@@ -438,7 +507,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <WhatsappGroups />
+                <WhatsappGroups groups={whatsappGroups} />
               </section>
 
               <section id="university-groups" className="section">
@@ -450,7 +519,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <UniversityGroups />
+                <UniversityGroups groups={universityGroups} />
               </section>
 
               <section id="telegram-groups" className="section">
@@ -461,7 +530,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <TelegramGroups />
+                <TelegramGroups groups={telegramGroups} />
               </section>
 
               <section id="whatsapp-channels" className="section">
@@ -472,7 +541,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <WhatsappChannels />
+                <WhatsappChannels channels={whatsappChannels} />
               </section>
 
               <section id="youtube-channels" className="section">
@@ -483,7 +552,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <YoutubeChannels />
+                <YoutubeChannels channels={youtubeChannels} />
               </section>
 
               <section id="education-websites" className="section">
@@ -494,7 +563,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <EducationWebsites />
+                <EducationWebsites websites={educationWebsites} />
           </section>
 
               <section id="donate" className="section">
@@ -586,73 +655,79 @@ export default function App() {
 
             {/* News grid */}
             <Container maxWidth="lg" sx={{ mt: { xs: 1, sm: 2 }, mb: { xs: 4, sm: 5 } }}>
-              <Grid container spacing={{ xs: 2, sm: 3 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'repeat(3, minmax(0, 1fr))'
+                  },
+                  gap: { xs: 2, sm: 3 }
+                }}
+              >
                 {newsItems.slice(0, 6).map((item) => (
-                  <Grid key={item.id} item xs={12} sm={6} md={4}>
-                    <Paper
-                      elevation={3}
+                  <Paper
+                    key={item.id}
+                    elevation={3}
+                    sx={{
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    <Box
                       sx={{
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column'
+                        position: 'relative',
+                        pt: '56.25%',
+                        backgroundImage: `url(${item.imageUrl || newsBackgroundImage})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
                       }}
-                    >
-                      <Box
+                    />
+                    <Box sx={{ p: { xs: 1.8, sm: 2.2 } }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 700, mb: 1, fontSize: { xs: 14, sm: 15 } }}
+                      >
+                        {item.title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
                         sx={{
-                          position: 'relative',
-                          pt: '56.25%',
-                          backgroundImage: `url(${item.imageUrl || newsBackgroundImage})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
+                          fontSize: { xs: 13, sm: 13.5 },
+                          color: 'text.secondary',
+                          mb: 1.5
                         }}
-                      />
-                      <Box sx={{ p: { xs: 1.8, sm: 2.2 } }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: 700, mb: 1, fontSize: { xs: 14, sm: 15 } }}
-                        >
-                          {item.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: { xs: 13, sm: 13.5 },
-                            color: 'text.secondary',
-                            mb: 1.5
-                          }}
-                        >
-                          {item.description}
-                        </Typography>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="success"
-                          onClick={() => {
-                            const text = `${item.title}\n\n${item.description}\n\nShared from HopeNotes News.`;
-                            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                            window.open(url, '_blank', 'noopener');
-                          }}
-                        >
-                          Share on WhatsApp
-                        </Button>
-                      </Box>
-                    </Paper>
-                  </Grid>
+                      >
+                        {item.description}
+                      </Typography>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => {
+                          const text = `${item.title}\n\n${item.description}\n\nShared from HopeNotes News.`;
+                          const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                          window.open(url, '_blank', 'noopener');
+                        }}
+                      >
+                        Share on WhatsApp
+                      </Button>
+                    </Box>
+                  </Paper>
                 ))}
+              </Box>
 
-                {newsItems.length === 0 && (
-                  <Grid item xs={12}>
-                    <Typography
-                      variant="body2"
-                      sx={{ textAlign: 'center', color: 'text.secondary', mt: { xs: 1, sm: 2 } }}
-                    >
-                      No news has been posted yet. Be the first to share a story from the ground.
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
+              {newsItems.length === 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{ textAlign: 'center', color: 'text.secondary', mt: { xs: 1, sm: 2 } }}
+                >
+                  No news has been posted yet. Be the first to share a story from the ground.
+                </Typography>
+              )}
 
               {/* Add news form trigger and form */}
               <Box sx={{ mt: { xs: 4, sm: 5 }, textAlign: 'center' }}>
