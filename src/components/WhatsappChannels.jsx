@@ -3,21 +3,29 @@ import { fetchWhatsappChannels } from '../services/whatsappChannels.js';
 import { Box, Paper, Typography, Button, CircularProgress, Chip } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
-export function WhatsappChannels() {
+export function WhatsappChannels({ channels: propChannels }) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchWhatsappChannels();
-        setChannels(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    if (propChannels && propChannels.length > 0) {
+      setChannels(propChannels);
+      setLoading(false);
+    } else if (propChannels && propChannels.length === 0) {
+      setChannels([]);
+      setLoading(false);
+    } else {
+      const load = async () => {
+        try {
+          const data = await fetchWhatsappChannels();
+          setChannels(data);
+        } finally {
+          setLoading(false);
+        }
+      };
+      load();
+    }
+  }, [propChannels]);
 
   if (loading) {
     return (
