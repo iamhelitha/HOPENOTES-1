@@ -3,21 +3,29 @@ import { fetchTelegramGroups } from '../services/telegramGroups.js';
 import { Box, Paper, Typography, Button, CircularProgress, Chip } from '@mui/material';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-export function TelegramGroups() {
+export function TelegramGroups({ groups: propGroups }) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchTelegramGroups();
-        setGroups(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    if (propGroups && propGroups.length > 0) {
+      setGroups(propGroups);
+      setLoading(false);
+    } else if (propGroups && propGroups.length === 0) {
+      setGroups([]);
+      setLoading(false);
+    } else {
+      const load = async () => {
+        try {
+          const data = await fetchTelegramGroups();
+          setGroups(data);
+        } finally {
+          setLoading(false);
+        }
+      };
+      load();
+    }
+  }, [propGroups]);
 
   if (loading) {
     return (
@@ -55,7 +63,13 @@ export function TelegramGroups() {
   }
 
   return (
-    <Box sx={{ display: 'grid', gap: { xs: 1.2, sm: 1.5, md: 1.5 } }}>
+    <Box sx={{ 
+      display: 'grid', 
+      gap: { xs: 1.2, sm: 1.5, md: 1.5 },
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box'
+    }}>
       {groups.map((group) => (
         <Paper
           key={group.id}
@@ -74,10 +88,22 @@ export function TelegramGroups() {
             bgcolor:
               theme.palette.mode === 'light'
                 ? 'rgba(240,253,250,0.6)'
-                : 'rgba(6,78,59,0.2)'
+                : 'rgba(6,78,59,0.2)',
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'hidden',
+            boxSizing: 'border-box'
           })}
         >
-          <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.1, md: 1.1 }, flex: 1 }}>
+          <Box sx={{ 
+            minWidth: 0, 
+            display: 'flex', 
+            alignItems: { xs: 'flex-start', sm: 'center' }, 
+            gap: { xs: 1, sm: 1.1, md: 1.1 }, 
+            flex: 1,
+            width: '100%',
+            overflow: 'hidden'
+          }}>
             <Box
               sx={{
                 width: { xs: 30, sm: 34, md: 34 },
@@ -95,7 +121,7 @@ export function TelegramGroups() {
             >
               <TelegramIcon sx={{ fontSize: { xs: 18, sm: 20, md: 20 } }} />
             </Box>
-            <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Box sx={{ minWidth: 0, flex: 1, width: '100%', overflow: 'hidden' }}>
               <Typography
                 variant="subtitle2"
                 sx={{
@@ -104,26 +130,46 @@ export function TelegramGroups() {
                   fontSize: { xs: 13, sm: 14, md: 14 },
                   whiteSpace: { xs: 'normal', sm: 'nowrap' },
                   textOverflow: 'ellipsis',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  wordBreak: { xs: 'break-word', sm: 'normal' },
+                  maxWidth: '100%'
                 }}
               >
                 {group.subject || 'Telegram Study Group'}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mb: group.description ? 0.2 : 0, flexWrap: 'wrap' }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 0.6, 
+                mb: group.description ? 0.2 : 0, 
+                flexWrap: 'wrap',
+                width: '100%',
+                maxWidth: '100%'
+              }}>
                 {group.level === 'university' ? (
                   <>
                     {group.universityName && (
                       <Chip
                         size="small"
                         label={group.universityName}
-                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                        sx={{ 
+                          height: { xs: 18, sm: 20 }, 
+                          fontSize: { xs: 10, sm: 11 }, 
+                          borderRadius: 999,
+                          maxWidth: { xs: '100%', sm: 'none' }
+                        }}
                       />
                     )}
                     {group.year && (
                       <Chip
                         size="small"
                         label={`Year ${group.year}`}
-                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                        sx={{ 
+                          height: { xs: 18, sm: 20 }, 
+                          fontSize: { xs: 10, sm: 11 }, 
+                          borderRadius: 999,
+                          maxWidth: { xs: '100%', sm: 'none' }
+                        }}
                       />
                     )}
                   </>
@@ -133,7 +179,12 @@ export function TelegramGroups() {
                       <Chip
                         size="small"
                         label={`Grade ${group.grade}`}
-                        sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                        sx={{ 
+                          height: { xs: 18, sm: 20 }, 
+                          fontSize: { xs: 10, sm: 11 }, 
+                          borderRadius: 999,
+                          maxWidth: { xs: '100%', sm: 'none' }
+                        }}
                       />
                     )}
                   </>
@@ -142,7 +193,12 @@ export function TelegramGroups() {
                   <Chip
                     size="small"
                     label={`Medium: ${group.medium}`}
-                    sx={{ height: { xs: 18, sm: 20 }, fontSize: { xs: 10, sm: 11 }, borderRadius: 999 }}
+                    sx={{ 
+                      height: { xs: 18, sm: 20 }, 
+                      fontSize: { xs: 10, sm: 11 }, 
+                      borderRadius: 999,
+                      maxWidth: { xs: '100%', sm: 'none' }
+                    }}
                   />
                 )}
               </Box>
@@ -153,8 +209,10 @@ export function TelegramGroups() {
                   sx={{ 
                     fontSize: { xs: 12, sm: 13 },
                     whiteSpace: { xs: 'normal', sm: 'nowrap' }, 
-                    textOverflow: 'ellipsis', 
-                    overflow: 'hidden' 
+                    textOverflow: { xs: 'clip', sm: 'ellipsis' }, 
+                    overflow: { xs: 'visible', sm: 'hidden' },
+                    wordBreak: { xs: 'break-word', sm: 'normal' },
+                    maxWidth: '100%'
                   }}
                 >
                   {group.description}
@@ -170,6 +228,9 @@ export function TelegramGroups() {
               alignSelf: { xs: 'stretch', sm: 'center' },
               fontSize: { xs: 12, sm: 13, md: 14 },
               px: { xs: 2, sm: 2.5, md: 2.5 },
+              minWidth: { xs: '100%', sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: { xs: '100%', sm: 'none' },
               borderColor: (theme) =>
                 theme.palette.mode === 'light'
                   ? 'rgba(6,182,212,0.5)'
