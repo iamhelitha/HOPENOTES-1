@@ -30,6 +30,7 @@ import { fetchTelegramGroups } from './services/telegramGroups.js';
 import { fetchWhatsappChannels } from './services/whatsappChannels.js';
 import { fetchYoutubeChannels } from './services/youtubeChannels.js';
 import { fetchEducationWebsites } from './services/educationWebsites.js';
+import { fetchFileUploads } from './services/fileUploads.js';
 import footerLogoImage from './images/Gemini_Generated_Image_d5zif3d5zif3d5zi.png';
 
 export default function App() {
@@ -57,14 +58,15 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [links, whatsapp, uni, telegram, whatsappChannels, youtube, websites] = await Promise.all([
+        const [links, whatsapp, uni, telegram, whatsappChannels, youtube, websites, fileUploads] = await Promise.all([
           fetchDriveLinks(),
           fetchWhatsappGroups(),
           fetchUniversityGroups(),
           fetchTelegramGroups(),
           fetchWhatsappChannels(),
           fetchYoutubeChannels(),
-          fetchEducationWebsites()
+          fetchEducationWebsites(),
+          fetchFileUploads()
         ]);
 
         // Map driveLinks docs to the shape expected by NotesGrid
@@ -146,12 +148,36 @@ export default function App() {
           description: website.description || ''
         }));
 
+        // Map File Uploads
+        const fileUploadNotes = fileUploads.map((file) => ({
+          id: file.id,
+          subject: file.subject || 'Uploaded File',
+          grade: file.grade || '',
+          medium: file.medium || '',
+          curriculum: 'Uploaded File',
+          title: file.subject || file.fileName || 'Uploaded File',
+          region: '',
+          url: file.url,
+          level: 'school', // File uploads are currently school level only
+          universityName: '',
+          type: 'file',
+          description: file.description || '',
+          fileName: file.fileName || '',
+          fileSize: file.fileSize || 0,
+          fileType: file.fileType || ''
+        }));
+
+        console.log('File uploads fetched:', fileUploads.length);
+        console.log('File upload notes mapped:', fileUploadNotes.length);
+        console.log('Sample file upload note:', fileUploadNotes[0]);
+
         // Combine all notes
-        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes, ...websiteNotes];
+        const allNotes = [...driveNotes, ...telegramNotes, ...whatsappChannelNotes, ...youtubeNotes, ...websiteNotes, ...fileUploadNotes];
+        console.log('Total notes (including file uploads):', allNotes.length);
         setNotes(allNotes);
 
         setStats({
-          notes: links.length,
+          notes: links.length + fileUploads.length,
           whatsapp: whatsapp.length,
           university: uni.length
         });
@@ -163,13 +189,20 @@ export default function App() {
     loadData();
   }, []);
 
-  const filteredNotes = notes.filter((note) => {
-    const matchesLevel = levelFilter === 'all' || note.level === levelFilter;
-    const matchesGrade =
-      gradeFilter === 'all' || String(note.grade) === String(gradeFilter);
+  const filteredNotes = useMemo(() => {
+    const filtered = notes.filter((note) => {
+      const matchesLevel = levelFilter === 'all' || note.level === levelFilter;
+      const matchesGrade =
+        gradeFilter === 'all' || String(note.grade) === String(gradeFilter);
 
-    return matchesLevel && matchesGrade;
-  });
+      return matchesLevel && matchesGrade;
+    });
+    
+    console.log('Filtered notes:', filtered.length, 'out of', notes.length);
+    console.log('File uploads in filtered:', filtered.filter(n => n.type === 'file').length);
+    
+    return filtered;
+  }, [notes, levelFilter, gradeFilter]);
 
   return (
     <ThemeProvider theme={theme}>
