@@ -76,7 +76,8 @@ export function NotesGrid({ notes }) {
                   <span className="chip chip-medium">{note.medium}</span>
                   {note.type && (
                     <span className={`chip chip-${note.type}`}>
-                      {note.type === 'drive' && '📁 Google Drive'}
+                      {note.type === 'drive' &&
+                        (note.provider === 'onedrive' ? '📂 OneDrive' : '📁 Google Drive')}
                       {note.type === 'telegram' && '💬 Telegram'}
                       {note.type === 'whatsappChannel' && '📢 WhatsApp Channel'}
                       {note.type === 'youtube' && '▶️ YouTube'}
