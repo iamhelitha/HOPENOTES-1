@@ -1,4 +1,4 @@
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 export async function fetchUniversityGroups() {
@@ -12,13 +12,13 @@ export async function fetchUniversityGroups() {
 
 export async function checkDuplicateUniversityLink(url) {
   try {
-    const normalizedUrl = url.trim().toLowerCase();
-    // Fetch all university groups and check in memory for case-insensitive matching
-    const allGroups = await fetchUniversityGroups();
-    return allGroups.some((group) => {
-      const existingUrl = (group.url || "").trim().toLowerCase();
-      return existingUrl === normalizedUrl;
-    });
+    // Use Firestore query to check for exact URL match (more efficient)
+    const q = query(
+      collection(db, "universityGroups"),
+      where("url", "==", url.trim())
+    );
+    const snap = await getDocs(q);
+    return !snap.empty; // If any docs found, it's a duplicate
   } catch (error) {
     console.error("Error checking duplicate university link:", error);
     return false;
