@@ -9,6 +9,7 @@ import { checkDuplicateYoutubeChannelLink } from "../services/youtubeChannels.js
 import { checkDuplicateWebsiteLink } from "../services/educationWebsites.js";
 import { uploadRateLimiter, getClientId } from "../utils/rateLimiter.js";
 import { sanitizeUrl, sanitizeString } from "../utils/inputSanitizer.js";
+import { uploadFileToCloudinary, validateFile, formatFileSize } from "../utils/cloudinaryUpload.js";
 
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
@@ -49,6 +50,8 @@ export function UploadForm() {
   const [mode, setMode] = useState('file'); // 'file' | 'links' | 'whatsapp' | 'uni' | 'telegram' | 'whatsappChannel' | 'youtube' | 'website'
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (event) => {
     const { name, value, files } = event.target;
@@ -280,6 +283,94 @@ export function UploadForm() {
     } catch (checkError) {
       console.error('Error checking for duplicates:', checkError);
       // Continue with submission if duplicate check fails (don't block user)
+    }
+
+    // Handle file upload mode
+    if (mode === 'file') {
+      if (!form.file) {
+        setError('Please select a file to upload.');
+        return;
+      }
+
+      // Validate file
+      const validation = validateFile(form.file);
+      if (!validation.valid) {
+        setError(validation.error);
+        return;
+      }
+
+      // Validate required fields
+      if (!form.subject || !form.subject.trim()) {
+        setError('Please enter a subject.');
+        return;
+      }
+      if (!form.grade) {
+        setError('Please select a grade.');
+        return;
+      }
+      if (!form.medium) {
+        setError('Please select a medium.');
+        return;
+      }
+
+      setIsUploading(true);
+      setUploadProgress(0);
+      setError('');
+
+      try {
+        // Upload file to Cloudinary
+        const uploadResult = await uploadFileToCloudinary(form.file, (progress) => {
+          setUploadProgress(progress);
+        });
+
+        // Get file extension from original file name
+        const fileName = form.file.name;
+        const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+        
+        // Map file extensions to readable types
+        const fileTypeMap = {
+          'pdf': 'PDF',
+          'doc': 'DOC',
+          'docx': 'DOCX',
+          'ppt': 'PPT',
+          'pptx': 'PPTX',
+          'jpg': 'JPG',
+          'jpeg': 'JPG',
+          'png': 'PNG'
+        };
+        
+        const readableFileType = fileTypeMap[fileExtension] || fileExtension.toUpperCase() || 'FILE';
+
+        // Save file metadata to Firestore
+        const fileData = {
+          subject: form.subject || '',
+          grade: form.grade || '',
+          medium: form.medium || '',
+          url: uploadResult.url,
+          publicId: uploadResult.publicId || '',
+          fileName: fileName,
+          fileSize: uploadResult.bytes || 0,
+          fileType: readableFileType,
+          description: form.description || '',
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, 'fileUploads'), fileData);
+
+        setStatus(
+          'Thank you for uploading your notes! Your file has been successfully uploaded and will help students continue their education during difficult times.'
+        );
+        setUploadProgress(0);
+        setIsUploading(false);
+        setForm(initialFormState);
+        return;
+      } catch (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        setError(uploadError.message || 'Failed to upload file. Please try again.');
+        setIsUploading(false);
+        setUploadProgress(0);
+        return;
+      }
     }
 
     // Persist to backend / Firestore depending on mode
@@ -1126,64 +1217,205 @@ export function UploadForm() {
           >
             {mode === 'file' ? (
               <>
-                <Grid item xs={12} md={6}>
-                  <Box
-                    sx={(theme) => ({
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      justifyContent: 'center',
-                      p: 2,
-                      borderRadius: 3,
-                      border:
-                        theme.palette.mode === 'light'
-                          ? '1px dashed rgba(148,163,184,0.8)'
-                          : '1px dashed rgba(148,163,184,0.7)',
-                      background:
-                        theme.palette.mode === 'light'
-                          ? 'rgba(248,250,252,0.9)'
-                          : 'rgba(15,23,42,0.95)'
-                    })}
-                  >
-                    <Box
+                <Grid item xs={12} sm={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Subject"
+                    id="subject-file"
+                    name="subject"
+                    placeholder="e.g. Mathematics, History, Science"
+                    value={form.subject}
+                    onChange={handleChange}
+                    required
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        borderRadius: { xs: 2, sm: 2.5 },
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'light'
+                            ? 'rgba(255,255,255,0.9)'
+                            : 'rgba(15,23,42,0.6)'
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        fontWeight: 600
+                      }
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={12} md={6}>
+                  <FormControl fullWidth required>
+                    <InputLabel id="grade-file-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Grade</InputLabel>
+                    <Select
+                      labelId="grade-file-label"
+                      id="grade-file"
+                      name="grade"
+                      label="Grade"
+                      value={form.grade}
+                      onChange={handleChange}
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.2,
-                        mb: 1
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        borderRadius: { xs: 2, sm: 2.5 }
                       }}
                     >
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background:
-                            'radial-gradient(circle at 30% 0%, #e0f2fe, #0ea5e9)',
-                          boxShadow: '0 10px 24px rgba(37,99,235,0.4)',
-                          color: '#f9fafb'
-                        }}
-                      >
-                        <CloudUploadIcon fontSize="small" />
-                      </Box>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          File uploads under construction
-                        </Typography>
+                      <MenuItem value="" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>
+                        <em>Select Grade</em>
+                      </MenuItem>
+                      <MenuItem value="1" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 1</MenuItem>
+                      <MenuItem value="2" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 2</MenuItem>
+                      <MenuItem value="3" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 3</MenuItem>
+                      <MenuItem value="4" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 4</MenuItem>
+                      <MenuItem value="5" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 5</MenuItem>
+                      <MenuItem value="6" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 6</MenuItem>
+                      <MenuItem value="7" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 7</MenuItem>
+                      <MenuItem value="8" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 8</MenuItem>
+                      <MenuItem value="9" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 9</MenuItem>
+                      <MenuItem value="10" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 10</MenuItem>
+                      <MenuItem value="11" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 11</MenuItem>
+                      <MenuItem value="12" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Grade 12</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={12} md={6}>
+                  <FormControl fullWidth required>
+                    <InputLabel id="medium-file-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Medium</InputLabel>
+                    <Select
+                      labelId="medium-file-label"
+                      id="medium-file"
+                      name="medium"
+                      label="Medium"
+                      value={form.medium}
+                      onChange={handleChange}
+                      sx={{
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        borderRadius: { xs: 2, sm: 2.5 }
+                      }}
+                    >
+                      <MenuItem value="" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>
+                        <em>Select medium</em>
+                      </MenuItem>
+                      <MenuItem value="Sinhala" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Sinhala Medium</MenuItem>
+                      <MenuItem value="Tamil" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>Tamil Medium</MenuItem>
+                      <MenuItem value="English" sx={{ fontSize: { xs: 14, sm: 15, md: 16 } }}>English Medium</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box
+                    sx={(theme) => ({
+                      p: { xs: 2.5, sm: 3, md: 3.5 },
+                      borderRadius: { xs: 3, sm: 3.5 },
+                      border: isUploading
+                        ? `2px solid ${theme.palette.mode === 'light' ? 'rgba(8,145,178,0.5)' : 'rgba(56,189,248,0.6)'}`
+                        : theme.palette.mode === 'light'
+                        ? '2px dashed rgba(148,163,184,0.4)'
+                        : '2px dashed rgba(148,163,184,0.5)',
+                      background:
+                        theme.palette.mode === 'light'
+                          ? isUploading
+                            ? 'rgba(240,253,250,0.6)'
+                            : 'rgba(248,250,252,0.9)'
+                          : isUploading
+                          ? 'rgba(8,47,73,0.4)'
+                          : 'rgba(15,23,42,0.95)',
+                      transition: 'all 0.3s ease',
+                      position: 'relative'
+                    })}
+                  >
+                    <TextField
+                      fullWidth
+                      type="file"
+                      id="file"
+                      name="file"
+                      onChange={handleChange}
+                      required
+                      disabled={isUploading}
+                      inputProps={{
+                        accept: '.pdf,.doc,.docx,.ppt,.pptx,.jpg,.png,.jpeg'
+                      }}
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          fontSize: { xs: 14, sm: 15, md: 16 },
+                          borderRadius: { xs: 2, sm: 2.5 }
+                        }
+                      }}
+                    />
+                    {form.file && (
+                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CloudUploadIcon sx={{ color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          You&apos;ll soon be able to upload PDFs and images directly. For now,
-                          please share notes via Google Drive or WhatsApp groups.
+                          Selected: <strong>{form.file.name}</strong> ({formatFileSize(form.file.size)})
                         </Typography>
                       </Box>
-                    </Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Tip: use the <strong>Google Drive links</strong> or{' '}
-                      <strong>WhatsApp group links</strong> tabs above to share your resources.
+                    )}
+                    {isUploading && (
+                      <Box sx={{ mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Uploading...
+                          </Typography>
+                          <Typography variant="body2" color="primary" fontWeight={600}>
+                            {uploadProgress}%
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 8,
+                            borderRadius: 999,
+                            bgcolor: (theme) =>
+                              theme.palette.mode === 'light'
+                                ? 'rgba(148,163,184,0.2)'
+                                : 'rgba(148,163,184,0.3)',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: `${uploadProgress}%`,
+                              height: '100%',
+                              background: 'linear-gradient(90deg, #0891b2, #22c55e)',
+                              transition: 'width 0.3s ease',
+                              borderRadius: 999
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+                      Supported formats: PDF, DOC, DOCX, PPT, PPTX, JPG, PNG (Max 10MB)
                     </Typography>
                   </Box>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    id="description-file"
+                    name="description"
+                    label="Description (optional)"
+                    placeholder="Brief description of the notes or materials"
+                    value={form.description}
+                    onChange={handleChange}
+                    multiline
+                    rows={3}
+                    minRows={3}
+                    maxRows={6}
+                    helperText="Optional: Add a brief description to help students understand what this file contains."
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        borderRadius: { xs: 2, sm: 2.5 }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: { xs: 14, sm: 15, md: 16 },
+                        fontWeight: 600
+                      }
+                    }}
+                  />
                 </Grid>
               </>
             ) : (
@@ -1196,15 +1428,15 @@ export function UploadForm() {
                     label="Subject"
                     id="subject"
                     name="subject"
-                        placeholder="e.g. Mathematics, History, Science or All subjects"
+                    placeholder="e.g. Mathematics, History, Science or All subjects"
                     value={form.subject}
                     onChange={handleChange}
                     required
-                        helperText={
-                          mode === 'links'
+                    helperText={
+                      mode === 'links'
                             ? 'For links that help everyone, you can type "All subjects".'
-                            : ''
-                        }
+                        : ''
+                    }
                   />
                 </Grid>
 
@@ -1313,8 +1545,8 @@ export function UploadForm() {
                         )}
                       </>
                     )}
-                  </>
-                )}
+              </>
+            )}
 
                 {mode === 'whatsapp' && (
               <>
@@ -1331,8 +1563,8 @@ export function UploadForm() {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required>
                         <InputLabel id="level-whatsapp-label" sx={{ fontSize: { xs: 14, sm: 15, md: 16 }, fontWeight: 600 }}>Level</InputLabel>
                     <Select
                           labelId="level-whatsapp-label"
@@ -1436,23 +1668,6 @@ export function UploadForm() {
                 </FormHelperText>
               </FormControl>
             </Grid>
-
-            {mode === 'file' && (
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  id="file"
-                  name="file"
-                  type="file"
-                  onChange={handleChange}
-                  required
-                  inputProps={{
-                    accept: '.pdf,.doc,.docx,.ppt,.pptx,.jpg,.png'
-                  }}
-                  helperText="Upload clear scans or PDFs where possible."
-                />
-              </Grid>
-            )}
 
             {mode === 'links' && (
               <Grid item xs={12} sm={12} md={6}>
@@ -1838,7 +2053,9 @@ export function UploadForm() {
                   value={form.description}
                   onChange={handleChange}
                   multiline
-                  rows={{ xs: 3, sm: 3, md: 2 }}
+                  rows={3}
+                  minRows={3}
+                  maxRows={6}
                   helperText="Optional: Add a brief description to help students understand what this resource offers."
                   sx={{
                     '& .MuiInputBase-root': {
@@ -1975,7 +2192,9 @@ export function UploadForm() {
                 value={form.description}
                 onChange={handleChange}
                 multiline
+                rows={3}
                 minRows={3}
+                maxRows={6}
               />
             </Grid>
           </Grid>
@@ -1996,7 +2215,7 @@ export function UploadForm() {
             type="submit"
             variant="contained"
             color="primary"
-            disabled={mode === 'file'}
+            disabled={isUploading || (mode === 'file' && !form.file)}
             fullWidth
             sx={{
               maxWidth: { xs: '100%', sm: '500px', md: '600px' },
@@ -2047,7 +2266,7 @@ export function UploadForm() {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            {mode === 'file' ? '⏳ Upload (Coming Soon)' : '✨ Submit Donation'}
+            {isUploading ? `⏳ Uploading... ${uploadProgress}%` : mode === 'file' ? '📤 Upload File' : '✨ Submit Donation'}
           </Button>
         </Box>
       </Box>
