@@ -163,7 +163,6 @@ export function WhatsappGroups({ groups: propGroups }) {
               )}
             </Box>
           </Box>
-          
           <Button
             variant="outlined"
             size="small"
